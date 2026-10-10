@@ -12,7 +12,7 @@ const en = {
   appName: "Elsa's Games",
   version: (v: string) => `Version ${v}`,
 
-  games: { sudoku: 'Sudoku', nonogram: 'Nonogram' } as Record<string, string>,
+  games: { sudoku: 'Sudoku', nonogram: 'Nonogram', arrows: 'Arrows' } as Record<string, string>,
 
   /** Words for each game's options: options.<game id>.<option key>. */
   options: {
@@ -130,6 +130,14 @@ const en = {
     slips: (n: number) =>
       n === 1 ? 'The square in red is wrong.' : `The ${n} squares in red are wrong. It started at number 1.`,
   },
+
+  arrows: {
+    undo: 'Undo',
+    hint: 'Hint',
+    left: (n: number) => (n === 1 ? '1 arrow left' : `${n} arrows left`),
+    blocked: 'Another arrow is in the way.',
+    hinted: 'This arrow can go.',
+  },
 };
 
 export type Strings = typeof en;
@@ -140,7 +148,7 @@ const af: Strings = {
   appName: 'Elsa se Speletjies',
   version: (v) => `Weergawe ${v}`,
 
-  games: { sudoku: 'Sudoku', nonogram: 'Nonogram' },
+  games: { sudoku: 'Sudoku', nonogram: 'Nonogram', arrows: 'Pyle' },
 
   options: {
     sudoku: {
@@ -255,6 +263,14 @@ const af: Strings = {
     showMe: 'Wys my',
     slips: (n) =>
       n === 1 ? 'Die blokkie in rooi is verkeerd.' : `Die ${n} blokkies in rooi is verkeerd. Dit het by nommer 1 begin.`,
+  },
+
+  arrows: {
+    undo: 'Ontdoen',
+    hint: 'Wenk',
+    left: (n) => (n === 1 ? '1 pyl oor' : `${n} pyle oor`),
+    blocked: '’n Ander pyl is in die pad.',
+    hinted: 'Hierdie pyl kan gaan.',
   },
 };
 

@@ -250,11 +250,13 @@ button {
   aspect-ratio: auto;
 }
 
+.arrows .message,
 .nonogram .message {
   flex: none;
 }
 
 .sudoku,
+.arrows,
 .nonogram {
   flex: 1;
   display: flex;
@@ -335,6 +337,11 @@ button {
   background: var(--ink);
 }
 
+.tools.two {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.arrows .tools button,
 .nonogram .tools button {
   min-height: 3.6rem;
 }
