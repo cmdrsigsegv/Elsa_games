@@ -1,0 +1,9 @@
+// Puzzle generators by game id. Kept apart from games/index.ts so the
+// background worker can load the generators without any screen code.
+
+import type { PuzzleBase } from '../kit/game';
+import { generate as sudoku } from './sudoku/generate';
+
+export const generators: Record<string, (seed: number, target: number) => PuzzleBase> = {
+  sudoku,
+};

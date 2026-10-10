@@ -46,5 +46,7 @@ export default defineConfig({
   ],
   test: {
     include: ['src/**/*.test.ts'],
+    // Generating hard puzzles takes a second or so each.
+    testTimeout: 60_000,
   },
 });

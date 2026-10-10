@@ -1,8 +1,7 @@
 // The list of games the shell offers. Adding a game is one import and one
-// entry here.
-export interface GameEntry {
-  id: string;
-  name: string;
-}
+// entry here, plus its generator in generators.ts and its name in strings.ts.
 
-export const games: GameEntry[] = [];
+import type { Game } from '../kit/game';
+import { sudoku } from './sudoku';
+
+export const games: Game[] = [sudoku];

@@ -1,5 +1,7 @@
 import { render } from 'preact';
-import { Home } from './shell/Home';
+import { App } from './shell/App';
+import { keepStorage } from './storage/kv';
 import './shell/app.css';
 
-render(<Home />, document.getElementById('app')!);
+keepStorage();
+render(<App />, document.getElementById('app')!);

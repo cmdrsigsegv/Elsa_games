@@ -5,6 +5,11 @@
   --ink-quiet: #6b665e;
   --line: #d9d4c8;
   --accent: #2f6f6a;
+  --line-strong: #4a463f;
+  --wrong: #c0392b;
+  --tint-selected: #b9dbd7;
+  --tint-same: #d3e8e5;
+  --tint-peer: #eeebe3;
 
   color-scheme: light dark;
   font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
@@ -20,6 +25,11 @@
     --ink-quiet: #a39d92;
     --line: #3b3833;
     --accent: #7fc4bd;
+    --line-strong: #8f897d;
+    --wrong: #ff8a7a;
+    --tint-selected: #2f5a56;
+    --tint-same: #2b4543;
+    --tint-peer: #33312d;
   }
 }
 
@@ -83,8 +93,12 @@ body {
 
 .game-list button {
   width: 100%;
-  min-height: 4rem;
-  padding: 0 1.25rem;
+  min-height: 4.5rem;
+  padding: 0.75rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.15rem;
   border: 1px solid var(--line);
   border-radius: 0.875rem;
   background: var(--surface);
@@ -105,4 +119,222 @@ body {
   color: var(--ink-quiet);
   font-size: 0.8rem;
   text-align: center;
+}
+
+.game-list .sub {
+  color: var(--ink-quiet);
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+
+/* --- Playing a game --- */
+
+button {
+  font: inherit;
+  color: inherit;
+  touch-action: manipulation;
+}
+
+.ghost {
+  min-height: 2.75rem;
+  padding: 0 0.75rem;
+  border: 0;
+  border-radius: 0.6rem;
+  background: none;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.ghost:disabled {
+  opacity: 0.4;
+}
+
+.play {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 0 0.75rem 0.75rem;
+  position: relative;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: 3.25rem;
+}
+
+.bar h1 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 650;
+}
+
+.bar .back {
+  font-size: 1.9rem;
+  line-height: 1;
+  padding: 0 0.6rem 0.2rem 0.2rem;
+}
+
+.bar .level,
+.bar .clock {
+  color: var(--ink-quiet);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.bar .level {
+  margin: 0 auto 0 0.6rem;
+}
+
+.preparing {
+  margin: auto;
+  color: var(--ink-quiet);
+}
+
+.board {
+  display: block;
+  /* As wide as the screen allows, but never so tall that the controls fall off it. */
+  width: min(100%, 100dvh - 19.5rem);
+  aspect-ratio: 1;
+  margin: 0 auto;
+  border-radius: 0.4rem;
+  touch-action: none;
+}
+
+.sudoku {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.sudoku .message {
+  flex: 1;
+  min-height: 2.8rem;
+  margin: 0.5rem 0.25rem;
+  color: var(--ink-quiet);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.tools,
+.pad {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.tools {
+  grid-template-columns: repeat(4, 1fr);
+  margin-bottom: 0.6rem;
+}
+
+.pad {
+  grid-template-columns: repeat(9, 1fr);
+}
+
+.tools button,
+.pad button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 0.6rem;
+  background: var(--surface);
+  padding: 0;
+}
+
+.tools button {
+  min-height: 3rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.tools button.on {
+  border-color: var(--accent);
+  background: var(--tint-selected);
+}
+
+.pad button {
+  min-height: 3.9rem;
+  color: var(--accent);
+  font-size: 1.7rem;
+  font-weight: 500;
+  line-height: 1.1;
+}
+
+.pad.notes button {
+  border-style: dashed;
+  border-color: var(--accent);
+}
+
+.tools small,
+.pad small {
+  color: var(--ink-quiet);
+  font-size: 0.65rem;
+  font-weight: 400;
+}
+
+.tools button:active:not(:disabled),
+.pad button:active:not(:disabled),
+.ratings button:active {
+  background: var(--tint-selected);
+}
+
+.tools button:disabled,
+.pad button:disabled {
+  opacity: 0.35;
+}
+
+/* A panel that slides over the controls: puzzle finished, or a question. */
+.sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 1.25rem 1rem 1rem;
+  border: 1px solid var(--line);
+  border-bottom: 0;
+  border-radius: 1.25rem 1.25rem 0 0;
+  background: var(--surface);
+  box-shadow: 0 -0.5rem 2rem rgb(0 0 0 / 0.15);
+  text-align: center;
+}
+
+.sheet h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1.5rem;
+}
+
+.sheet p {
+  margin: 0 0 0.9rem;
+}
+
+.sheet .summary {
+  color: var(--ink-quiet);
+  font-variant-numeric: tabular-nums;
+}
+
+.ratings {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 0.5rem;
+}
+
+.ratings button {
+  min-height: 3.5rem;
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  background: var(--bg);
+  font-weight: 600;
+}
+
+.sheet-foot {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.5rem;
 }

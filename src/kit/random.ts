@@ -23,8 +23,8 @@ export function random(seed: number): Random {
   const shuffle = <T>(items: T[]): T[] => {
     for (let i = items.length - 1; i > 0; i--) {
       const j = int(i + 1);
-      const tmp = items[i]!;
-      items[i] = items[j]!;
+      const tmp = items[i];
+      items[i] = items[j];
       items[j] = tmp;
     }
     return items;
