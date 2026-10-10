@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { tierFor } from './difficulty';
 import { generate } from './generate';
 import { PEERS, UNITS, bit } from './grid';
-import { apply, hint, isMistake, start, status, wrongCells } from './rules';
+import { apply, clashingCells, hint, isMistake, start, status, wrongCells } from './rules';
 import { countSolutions, solve } from './solve';
 
 const parse = (s: string) => [...s].map((ch) => (ch === '.' ? 0 : Number(ch)));
@@ -120,6 +120,26 @@ describe('rules', () => {
     expect(isMistake(p, s, { type: 'set', cell: empty, digit: right })).toBe(false);
     expect(isMistake(p, s, { type: 'note', cell: empty, digit: wrong })).toBe(false);
     expect(wrongCells(p, apply(p, s, { type: 'set', cell: empty, digit: wrong }))).toEqual([empty]);
+  });
+
+  it('tells a clash, which shows on the board, from a number that is merely wrong', () => {
+    // A wrong digit that is already in the cell's row, column or box clashes; one that is not, does not.
+    const seen = new Set(PEERS[empty].map((i) => p.givens[i]));
+    const clashing = [1, 2, 3, 4, 5, 6, 7, 8, 9].find((d) => d !== right && seen.has(d))!;
+    const quiet = [1, 2, 3, 4, 5, 6, 7, 8, 9].find((d) => d !== right && !seen.has(d));
+    expect(clashingCells(p, apply(p, start(p), { type: 'set', cell: empty, digit: clashing }))).toEqual([empty]);
+    if (quiet) {
+      const s = apply(p, start(p), { type: 'set', cell: empty, digit: quiet });
+      expect(clashingCells(p, s)).toEqual([]);
+      expect(wrongCells(p, s)).toEqual([empty]);
+    }
+  });
+
+  it('lists wrong numbers in the order they were entered', () => {
+    const cells = p.givens.flatMap((d, i) => (d ? [] : [i])).slice(0, 3);
+    let s = start(p);
+    for (const cell of [cells[2], cells[0], cells[1]]) s = apply(p, s, { type: 'set', cell, digit: (p.solution[cell] % 9) + 1 });
+    expect(wrongCells(p, s)).toEqual([cells[2], cells[0], cells[1]]);
   });
 
   it('ends only when every cell is right', () => {

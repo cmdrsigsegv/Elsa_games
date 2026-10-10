@@ -43,10 +43,16 @@ interface Props {
   draw(ctx: CanvasRenderingContext2D, size: number, theme: Theme): void;
   /** A touch at (x, y), each from 0 to `size`. */
   onTap?(x: number, y: number, size: number): void;
+  /**
+   * A finger put down, dragged, and lifted. 'cancel' means the phone took the
+   * touch away (a call, a system gesture): drop the stroke.
+   */
+  onStroke?(phase: 'start' | 'move' | 'end' | 'cancel', x: number, y: number, size: number): void;
   label: string;
 }
 
-export function Board({ draw, onTap, label }: Props) {
+export function Board({ draw, onTap, onStroke, label }: Props) {
+  const stroking = useRef<number | null>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const [size, setSize] = useState(0);
   const [, repaint] = useState(0);
@@ -58,7 +64,13 @@ export function Board({ draw, onTap, label }: Props) {
     const scheme = matchMedia('(prefers-color-scheme: dark)');
     const onScheme = () => repaint((n) => n + 1);
     scheme.addEventListener('change', onScheme);
+    // Touches on the board are ours alone. Without this the browser also
+    // reads a quick drag as a flick, and then swallows the next tap, wherever
+    // it lands, as "stop the flick": a button pressed once did nothing.
+    const own = (e: TouchEvent) => e.preventDefault();
+    el.addEventListener('touchstart', own, { passive: false });
     return () => {
+      el.removeEventListener('touchstart', own);
       observer.disconnect();
       scheme.removeEventListener('change', onScheme);
     };
@@ -88,6 +100,34 @@ export function Board({ draw, onTap, label }: Props) {
       onPointerDown={(e) => {
         const box = e.currentTarget.getBoundingClientRect();
         onTap?.(e.clientX - box.left, e.clientY - box.top, box.width);
+        if (!onStroke) return;
+        // No setPointerCapture: a touch already stays with the element it began on.
+        if (stroking.current !== null) onStroke('cancel', 0, 0, 0);
+        stroking.current = e.pointerId;
+        onStroke('start', e.clientX - box.left, e.clientY - box.top, box.width);
+      }}
+      onPointerMove={(e) => {
+        if (stroking.current !== e.pointerId) return;
+        const box = e.currentTarget.getBoundingClientRect();
+        onStroke?.('move', e.clientX - box.left, e.clientY - box.top, box.width);
+      }}
+      onPointerUp={(e) => {
+        if (stroking.current !== e.pointerId) return;
+        stroking.current = null;
+        const box = e.currentTarget.getBoundingClientRect();
+        onStroke?.('end', e.clientX - box.left, e.clientY - box.top, box.width);
+      }}
+      onPointerLeave={(e) => {
+        // A mouse that wanders off the board ends its stroke at the edge.
+        if (stroking.current !== e.pointerId) return;
+        stroking.current = null;
+        const box = e.currentTarget.getBoundingClientRect();
+        onStroke?.('end', e.clientX - box.left, e.clientY - box.top, box.width);
+      }}
+      onPointerCancel={(e) => {
+        if (stroking.current !== e.pointerId) return;
+        stroking.current = null;
+        onStroke?.('cancel', 0, 0, 0);
       }}
     />
   );

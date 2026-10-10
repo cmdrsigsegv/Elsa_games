@@ -2,6 +2,7 @@
 // entry here, plus its generator in generators.ts and its name in strings.ts.
 
 import type { Game } from '../kit/game';
+import { nonogram } from './nonogram';
 import { sudoku } from './sudoku';
 
-export const games: Game[] = [sudoku];
+export const games: Game[] = [sudoku, nonogram];

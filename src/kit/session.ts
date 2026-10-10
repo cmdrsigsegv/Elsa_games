@@ -61,3 +61,14 @@ export async function loadSkill(gameId: string, tuning: AdaptiveTuning): Promise
   return (await load<Skill>(skillKey(gameId))) ?? initialSkill(tuning);
 }
 export const saveSkill = (gameId: string, skill: Skill) => save(skillKey(gameId), skill);
+
+const optionsKey = (gameId: string) => `options:${gameId}`;
+
+/** Her saved choices, with the game's initial value for anything unset or no longer offered. */
+export async function loadOptions(game: Game): Promise<Record<string, string>> {
+  const saved = (await load<Record<string, string>>(optionsKey(game.id))) ?? {};
+  return Object.fromEntries(
+    game.options.map((o) => [o.key, o.choices.includes(saved[o.key]) ? saved[o.key] : o.initial]),
+  );
+}
+export const saveOptions = (gameId: string, options: Record<string, string>) => save(optionsKey(gameId), options);

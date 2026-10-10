@@ -9,10 +9,12 @@ import { random } from '../kit/random';
 import {
   clearSession,
   current,
+  loadOptions,
   loadSession,
   loadSkill,
   newSession,
   play,
+  saveOptions,
   saveSession,
   saveSkill,
   started,
@@ -42,6 +44,8 @@ export function Play({ game, onExit }: { game: Game; onExit(): void }) {
   const [session, setSession] = useState<Session | null>(null);
   const [skill, setSkill] = useState<Skill | null>(null);
   const [asking, setAsking] = useState(false);
+  const [options, setOptions] = useState<Record<string, string>>({});
+  const [choosing, setChoosing] = useState(false);
 
   // Time played so far: `base`, plus the stretch since `since` while running.
   const clock = useRef<{ seed: number | null; base: number; since: number | null }>({ seed: null, base: 0, since: null });
@@ -60,7 +64,9 @@ export function Play({ game, onExit }: { game: Game; onExit(): void }) {
       const sk = await loadSkill(game.id, game.adaptive);
       const saved = await loadSession(game.id);
       const se = saved ?? newSession(game, await makePuzzle(game.id, nextTarget(sk, random(newSeed()), game.adaptive)));
+      const op = await loadOptions(game);
       if (!alive) return;
+      setOptions(op);
       setSkill(sk);
       setSession(se);
     })();
@@ -156,6 +162,11 @@ export function Play({ game, onExit }: { game: Game; onExit(): void }) {
         <h1>{t.games[game.id]}</h1>
         {session && <span class="level">{t.home.level(Math.round(session.puzzle.score))}</span>}
         {session && game.showTimer && <Clock read={elapsed} />}
+        {game.options.length > 0 && (
+          <button type="button" class="ghost" onClick={() => setChoosing(true)}>
+            {t.play.options}
+          </button>
+        )}
         <button type="button" class="ghost" disabled={!session} onClick={askNew}>
           {t.play.newPuzzle}
         </button>
@@ -171,6 +182,7 @@ export function Play({ game, onExit }: { game: Game; onExit(): void }) {
           undo={() => setSession((s) => s && undo(s))}
           canUndo={session.history.length > 1}
           countHint={() => setSession((s) => s && { ...s, hints: s.hints + 1 })}
+          options={options}
         />
       ) : (
         <p class="preparing">{t.play.preparing}</p>
@@ -197,6 +209,40 @@ export function Play({ game, onExit }: { game: Game; onExit(): void }) {
             </button>
             <button type="button" class="ghost" onClick={() => void next(null, false)}>
               {t.play.skip}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {choosing && (
+        <div class="sheet" role="dialog" aria-label={t.play.options}>
+          <h2>{t.play.options}</h2>
+          {game.options.map((o) => (
+            <div class="option" key={o.key}>
+              <p>{t.options[game.id][o.key].label}</p>
+              <div class="ratings">
+                {o.choices.map((choice) => (
+                  <button
+                    type="button"
+                    key={choice}
+                    class={options[o.key] === choice ? 'on' : ''}
+                    aria-pressed={options[o.key] === choice}
+                    onClick={() => {
+                      const changed = { ...options, [o.key]: choice };
+                      setOptions(changed);
+                      void saveOptions(game.id, changed);
+                    }}
+                  >
+                    {t.options[game.id][o.key].choices[choice]}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+          <div class="sheet-foot">
+            <span />
+            <button type="button" class="ghost" onClick={() => setChoosing(false)}>
+              {t.play.done}
             </button>
           </div>
         </div>

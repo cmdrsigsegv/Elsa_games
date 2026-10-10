@@ -11,6 +11,10 @@ export interface SudokuState {
   values: number[];
   /** Pencil notes per cell, as a bitmask of digits. */
   notes: number[];
+  /** How many numbers have been entered so far. */
+  moves: number;
+  /** For each cell, the value of `moves` when its number went in; 0 if empty or given. */
+  order: number[];
 }
 
 export type SudokuMove =
@@ -19,7 +23,7 @@ export type SudokuMove =
   | { type: 'erase'; cell: number };
 
 export function start(p: SudokuPuzzle): SudokuState {
-  return { values: [...p.givens], notes: new Array<number>(CELLS).fill(0) };
+  return { values: [...p.givens], notes: new Array<number>(CELLS).fill(0), moves: 0, order: new Array<number>(CELLS).fill(0) };
 }
 
 /** Returns the same state object when the move changes nothing. */
@@ -27,13 +31,18 @@ export function apply(p: SudokuPuzzle, s: SudokuState, m: SudokuMove): SudokuSta
   if (p.givens[m.cell]) return s;
   const values = [...s.values];
   const notes = [...s.notes];
+  // Games saved before `order` existed have none.
+  const order = [...(s.order ?? new Array<number>(CELLS).fill(0))];
+  let moves = s.moves ?? 0;
   switch (m.type) {
     case 'set':
       if (values[m.cell] === m.digit) {
         values[m.cell] = 0;
+        order[m.cell] = 0;
         break;
       }
       values[m.cell] = m.digit;
+      order[m.cell] = ++moves;
       notes[m.cell] = 0;
       if (tuning.tidyNotes) for (const peer of PEERS[m.cell]) notes[peer] &= ~bit(m.digit);
       break;
@@ -45,15 +54,29 @@ export function apply(p: SudokuPuzzle, s: SudokuState, m: SudokuMove): SudokuSta
       if (!values[m.cell] && !notes[m.cell]) return s;
       values[m.cell] = 0;
       notes[m.cell] = 0;
+      order[m.cell] = 0;
       break;
   }
-  return { values, notes };
+  return { values, notes, moves, order };
 }
 
-/** The cells holding a wrong digit. */
+/** The cells holding a wrong digit, in the order she entered them: the first is where it went wrong. */
 export function wrongCells(p: SudokuPuzzle, s: SudokuState): number[] {
   const out: number[] = [];
   for (let i = 0; i < CELLS; i++) if (s.values[i] && s.values[i] !== p.solution[i]) out.push(i);
+  return out.sort((a, b) => (s.order?.[a] ?? 0) - (s.order?.[b] ?? 0));
+}
+
+/**
+ * Her numbers that visibly break the rules: the same digit is already in the
+ * row, column or box. This needs no knowledge of the answer, and one of a
+ * clashing pair may in fact be right.
+ */
+export function clashingCells(p: SudokuPuzzle, s: SudokuState): number[] {
+  const out: number[] = [];
+  for (let i = 0; i < CELLS; i++) {
+    if (s.values[i] && !p.givens[i] && PEERS[i].some((peer) => s.values[peer] === s.values[i])) out.push(i);
+  }
   return out;
 }
 

@@ -21,8 +21,14 @@ export const tuning = {
     stretchBy: 6,
   } satisfies AdaptiveTuning,
 
-  /** Mark a wrong number in red as soon as it is entered. */
-  showMistakes: true,
+  /**
+   * When a wrong number turns red, unless she changes it in Options:
+   *   'obvious'  only when it clashes with the same number in its row, column or box
+   *   'always'   as soon as it is entered
+   */
+  mistakes: 'obvious' as 'obvious' | 'always',
+  /** With 'obvious': offer to show the slips once this many wrong numbers are sitting unnoticed. */
+  offerRevealAfter: 3,
   /** Show the clock while playing. Time is measured either way. */
   showTimer: false,
   /** Remove a number from the notes around a cell when it is filled in. */

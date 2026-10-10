@@ -11,6 +11,16 @@ export interface PuzzleBase {
   score: number;
 }
 
+/**
+ * A choice she can change from the Options sheet while playing. The words for
+ * it are in strings.ts under options.<game id>.<key>.
+ */
+export interface OptionDef {
+  key: string;
+  choices: string[];
+  initial: string;
+}
+
 /** What the kit hands a game's screen. */
 export interface ViewProps<P, S, M> {
   puzzle: P;
@@ -21,6 +31,8 @@ export interface ViewProps<P, S, M> {
   canUndo: boolean;
   /** Tells the kit a hint was used; hints feed the adaptive difficulty. */
   countHint(): void;
+  /** Her current choice for each of the game's options, by key. */
+  options: Record<string, string>;
 }
 
 // `any` by default so games of different types can sit in one list.
@@ -29,6 +41,7 @@ export interface Game<P extends PuzzleBase = any, S = any, M = any> {
   id: string;
   adaptive: AdaptiveTuning;
   showTimer: boolean;
+  options: OptionDef[];
 
   // Rules: pure functions, no drawing.
   start(puzzle: P): S;

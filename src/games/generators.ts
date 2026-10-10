@@ -2,8 +2,10 @@
 // background worker can load the generators without any screen code.
 
 import type { PuzzleBase } from '../kit/game';
+import { generate as nonogram } from './nonogram/generate';
 import { generate as sudoku } from './sudoku/generate';
 
 export const generators: Record<string, (seed: number, target: number) => PuzzleBase> = {
   sudoku,
+  nonogram,
 };

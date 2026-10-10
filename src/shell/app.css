@@ -184,6 +184,7 @@ button {
   color: var(--ink-quiet);
   font-size: 0.85rem;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .bar .level {
@@ -205,13 +206,14 @@ button {
   touch-action: none;
 }
 
-.sudoku {
+.sudoku,
+.nonogram {
   flex: 1;
   display: flex;
   flex-direction: column;
 }
 
-.sudoku .message {
+.message {
   flex: 1;
   min-height: 2.8rem;
   margin: 0.5rem 0.25rem;
@@ -269,6 +271,28 @@ button {
 .pad.notes button {
   border-style: dashed;
   border-color: var(--accent);
+}
+
+.tools .swatch {
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-bottom: 0.15rem;
+  border-radius: 0.2rem;
+  font-size: 1rem;
+  line-height: 1.1rem;
+  color: var(--ink-quiet);
+}
+
+.tools .swatch.fill {
+  background: var(--ink);
+}
+
+.nonogram .tools button {
+  min-height: 3.6rem;
+}
+
+.message .ghost {
+  min-height: 2rem;
 }
 
 .tools small,
@@ -331,6 +355,15 @@ button {
   border-radius: 0.75rem;
   background: var(--bg);
   font-weight: 600;
+}
+
+.ratings button.on {
+  border-color: var(--accent);
+  background: var(--tint-selected);
+}
+
+.option + .option {
+  margin-top: 1rem;
 }
 
 .sheet-foot {

@@ -12,6 +12,8 @@ export interface Look {
   hinted: number | null;
   /** Cells to paint as mistakes. */
   wrong: Set<number>;
+  /** When the slips are being shown: wrong cells in the order they were entered. */
+  slips: number[];
   highlightSame: boolean;
 }
 
@@ -67,6 +69,13 @@ export function draw(
         ctx.fillText(String(n), nx, ny);
       }
     }
+  }
+
+  // The order the slips were made in, small in the corner: 1 is where it went wrong.
+  if (look.slips.length > 1) {
+    ctx.font = `700 ${cell * 0.24}px ${FONT}`;
+    ctx.fillStyle = theme.wrong;
+    look.slips.forEach((i, n) => ctx.fillText(String(n + 1), x(i) + cell * 0.17, y(i) + cell * 0.2));
   }
 
   // Grid lines: thin between cells, strong between boxes and round the edge.

@@ -9,7 +9,23 @@ const en = {
   appName: "Elsa's Games",
   version: (v: string) => `Version ${v}`,
 
-  games: { sudoku: 'Sudoku' } as Record<string, string>,
+  games: { sudoku: 'Sudoku', nonogram: 'Nonogram' } as Record<string, string>,
+
+  /** Words for each game's options: options.<game id>.<option key>. */
+  options: {
+    sudoku: {
+      mistakes: {
+        label: 'Mark a wrong number in red',
+        choices: { obvious: 'Only when it clashes', always: 'Straight away' },
+      },
+    },
+    nonogram: {
+      mistakes: {
+        label: 'Mark a wrong square in red',
+        choices: { never: 'Only when I ask', always: 'Straight away' },
+      },
+    },
+  } as Record<string, Record<string, { label: string; choices: Record<string, string> }>>,
 
   home: {
     continue: 'Continue',
@@ -20,6 +36,8 @@ const en = {
   play: {
     back: 'Back',
     newPuzzle: 'New',
+    options: 'Options',
+    done: 'Done',
     preparing: 'Making a puzzle…',
     solved: 'Solved!',
     howWasIt: 'How was that one?',
@@ -44,6 +62,10 @@ const en = {
     hint: 'Hint',
     hintAgain: 'Tap Hint again to fill it in.',
     hintFix: 'Tap Hint again to fix it.',
+    somethingWrong: 'Some numbers are wrong.',
+    showMe: 'Show me',
+    slips: (n: number) =>
+      n === 1 ? 'The number in red is wrong.' : `The ${n} numbers in red are wrong. It started at number 1.`,
     why: (why: HintWhy): string => {
       switch (why.kind) {
         case 'wrong':
@@ -58,6 +80,20 @@ const en = {
           return 'This one takes a harder trick.';
       }
     },
+  },
+
+  nonogram: {
+    fill: 'Fill',
+    cross: 'Cross',
+    undo: 'Undo',
+    hint: 'Hint',
+    hintWrong: 'This square is wrong. Tap Hint again to fix it.',
+    hintLine: (line: 'row' | 'column') =>
+      `Something can be worked out in this ${unit[line]}. Tap Hint again to mark it.`,
+    somethingWrong: 'Some squares are wrong.',
+    showMe: 'Show me',
+    slips: (n: number) =>
+      n === 1 ? 'The square in red is wrong.' : `The ${n} squares in red are wrong. It started at number 1.`,
   },
 };
 

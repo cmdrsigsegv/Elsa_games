@@ -1,24 +1,44 @@
 // The sudoku screen: the grid, a row of tools, and the number pad.
 
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { Board } from '../../kit/Board';
 import type { ViewProps } from '../../kit/game';
 import { t } from '../../shell/strings';
 import { draw } from './draw';
 import type { SudokuPuzzle } from './generate';
-import { hint, wrongCells, type SudokuHint, type SudokuMove, type SudokuState } from './rules';
+import { clashingCells, hint, wrongCells, type SudokuHint, type SudokuMove, type SudokuState } from './rules';
 import { tuning } from './tuning';
 
 type Props = ViewProps<SudokuPuzzle, SudokuState, SudokuMove>;
 
 const DIGITS = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
-export function View({ puzzle, state, ended, play, undo, canUndo, countHint }: Props) {
+export function View({ puzzle, state, ended, play, undo, canUndo, countHint, options }: Props) {
   const [selected, setSelected] = useState<number | null>(null);
   const [notesMode, setNotesMode] = useState(false);
   const [shown, setShown] = useState<SudokuHint | null>(null);
+  // True after she asks to see her slips; lasts until they are all put right.
+  const [revealed, setRevealed] = useState(false);
 
-  const wrong = new Set(tuning.showMistakes ? wrongCells(puzzle, state) : []);
+  // Which numbers are red. A clash is visible on the board, so it is always
+  // marked; a number that is merely wrong is marked only if she chose
+  // "straight away", or has asked to see her slips.
+  const wrong = wrongCells(puzzle, state);
+  const clashing = clashingCells(puzzle, state);
+  const always = options.mistakes === 'always';
+  const showSlips = revealed && wrong.length > 0;
+  const red = new Set(always || showSlips ? [...wrong, ...clashing] : clashing);
+
+  useEffect(() => {
+    if (revealed && wrong.length === 0) setRevealed(false);
+  }, [revealed, wrong.length]);
+
+  // Offer to show the slips once several sit unnoticed, or the grid is full
+  // and still not right.
+  const unnoticed = wrong.filter((cell) => !red.has(cell)).length;
+  const full = state.values.every((d) => d !== 0);
+  const offer = !ended && unnoticed > 0 && (unnoticed >= tuning.offerRevealAfter || full);
+
   // A hint stays on screen until its cell is filled in correctly.
   const hinting = shown && state.values[shown.cell] !== shown.digit ? shown : null;
 
@@ -49,6 +69,30 @@ export function View({ puzzle, state, ended, play, undo, canUndo, countHint }: P
 
   const left = (digit: number) => 9 - state.values.filter((d) => d === digit).length;
 
+  let message = <>{' '}</>;
+  if (hinting) {
+    message = <>{`${t.sudoku.why(hinting.why)} ${hinting.why.kind === 'wrong' ? t.sudoku.hintFix : t.sudoku.hintAgain}`}</>;
+  } else if (showSlips) {
+    message = <>{t.sudoku.slips(wrong.length)}</>;
+  } else if (offer) {
+    message = (
+      <>
+        {t.sudoku.somethingWrong}{' '}
+        <button
+          type="button"
+          class="ghost"
+          onClick={() => {
+            countHint();
+            setRevealed(true);
+            setSelected(wrong[0]);
+          }}
+        >
+          {t.sudoku.showMe}
+        </button>
+      </>
+    );
+  }
+
   return (
     <div class="sudoku">
       <Board
@@ -57,7 +101,8 @@ export function View({ puzzle, state, ended, play, undo, canUndo, countHint }: P
           draw(ctx, size, theme, puzzle, state, {
             selected: ended ? null : selected,
             hinted: hinting?.cell ?? null,
-            wrong,
+            wrong: red,
+            slips: showSlips ? wrong : [],
             highlightSame: tuning.highlightSameNumber,
           })
         }
@@ -65,7 +110,7 @@ export function View({ puzzle, state, ended, play, undo, canUndo, countHint }: P
       />
 
       <p class="message" aria-live="polite">
-        {hinting ? `${t.sudoku.why(hinting.why)} ${hinting.why.kind === 'wrong' ? t.sudoku.hintFix : t.sudoku.hintAgain}` : ' '}
+        {message}
       </p>
 
       <div class="tools">
