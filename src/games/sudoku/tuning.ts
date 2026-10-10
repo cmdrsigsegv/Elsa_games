@@ -29,8 +29,6 @@ export const tuning = {
   mistakes: 'obvious' as 'obvious' | 'always',
   /** With 'obvious': offer to show the slips once this many wrong numbers are sitting unnoticed. */
   offerRevealAfter: 3,
-  /** Show the clock while playing. Time is measured either way. */
-  showTimer: false,
   /** Remove a number from the notes around a cell when it is filled in. */
   tidyNotes: true,
   /** Highlight every cell holding the same number as the selected one. */

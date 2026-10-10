@@ -21,12 +21,14 @@ import {
   undo,
   type Session,
 } from '../kit/session';
+import { settings } from '../kit/settings';
+import { recordPlayed } from '../kit/stats';
 import { makePuzzle, newSeed } from '../kit/supply';
 import { t } from './strings';
 
 const RATINGS: Rating[] = ['easy', 'right', 'hard'];
 
-function clockText(ms: number): string {
+export function clockText(ms: number): string {
   const s = Math.floor(ms / 1000);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 }
@@ -136,6 +138,16 @@ export function Play({ game, onExit }: { game: Game; onExit(): void }) {
       );
       setSkill(after);
       void saveSkill(game.id, after);
+      void recordPlayed(game.id, {
+        at: Date.now(),
+        score: session.puzzle.score,
+        timeMs: elapsed(),
+        hints: session.hints,
+        mistakes: session.mistakes,
+        rating,
+        abandoned,
+        level: after.level,
+      });
     }
     const ready =
       prepared.current?.seed === session.puzzle.seed
@@ -161,7 +173,7 @@ export function Play({ game, onExit }: { game: Game; onExit(): void }) {
         </button>
         <h1>{t.games[game.id]}</h1>
         {session && <span class="level">{t.home.level(Math.round(session.puzzle.score))}</span>}
-        {session && game.showTimer && <Clock read={elapsed} />}
+        {session && !session.ended && settings().showTimer && <Clock read={elapsed} />}
         {game.options.length > 0 && (
           <button type="button" class="ghost" onClick={() => setChoosing(true)}>
             {t.play.options}

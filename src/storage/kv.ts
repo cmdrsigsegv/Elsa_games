@@ -55,6 +55,21 @@ export async function remove(key: string): Promise<void> {
   await run('readwrite', (s) => s.delete(key));
 }
 
+/** Everything stored, by key: what a backup file holds. */
+export async function loadAll(): Promise<Record<string, unknown>> {
+  const keys = (await run<IDBValidKey[]>('readonly', (s) => s.getAllKeys())) ?? [];
+  const out: Record<string, unknown> = Object.fromEntries(memory);
+  for (const key of keys) out[String(key)] = await load(String(key));
+  return out;
+}
+
+/** Replaces everything stored with the contents of a backup. */
+export async function replaceAll(data: Record<string, unknown>): Promise<void> {
+  memory.clear();
+  await run('readwrite', (s) => s.clear());
+  for (const [key, value] of Object.entries(data)) await save(key, value);
+}
+
 /** Asks the browser not to clear our data when the phone runs low on space. */
 export function keepStorage() {
   void navigator.storage?.persist?.().catch(() => false);

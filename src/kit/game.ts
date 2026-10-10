@@ -40,7 +40,6 @@ export interface Game<P extends PuzzleBase = any, S = any, M = any> {
   /** Also the key for its name in strings.ts and its generator in generators.ts. */
   id: string;
   adaptive: AdaptiveTuning;
-  showTimer: boolean;
   options: OptionDef[];
 
   // Rules: pure functions, no drawing.

@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { Board } from '../../kit/Board';
 import type { ViewProps } from '../../kit/game';
 import { t } from '../../shell/strings';
-import { cellAt, draw, layout } from './draw';
+import { NO_ZOOM, cellAt, draw, layout, pinch } from './draw';
 import type { NonogramPuzzle } from './generate';
 import { EMPTY, FILLED, UNKNOWN } from './lines';
 import {
@@ -39,6 +39,9 @@ export function View({ puzzle, state, ended, play, undo, canUndo, countHint, opt
   // True after she asks to see her slips; lasts until they are all put right.
   const [revealed, setRevealed] = useState(false);
   const live = useRef<Stroke | null>(null);
+  const [zoom, setZoom] = useState(NO_ZOOM);
+  // The finished picture is shown whole.
+  const view = ended ? NO_ZOOM : zoom;
 
   const wrong = wrongCells(puzzle, state);
   const always = options.mistakes === 'always';
@@ -68,9 +71,9 @@ export function View({ puzzle, state, ended, play, undo, canUndo, countHint, opt
     return out.filter((cell) => state.cells[cell] === s.from);
   };
 
-  const onStroke = (phase: 'start' | 'move' | 'end' | 'cancel', x: number, y: number, size: number) => {
+  const onStroke = (phase: 'start' | 'move' | 'end' | 'cancel', x: number, y: number, w: number, h: number) => {
     if (ended) return;
-    const l = layout(puzzle, size || 1);
+    const l = layout(puzzle, w, h, view);
     if (phase === 'start') {
       const cell = cellAt(puzzle, l, x, y);
       if (cell === null) return;
@@ -153,11 +156,15 @@ export function View({ puzzle, state, ended, play, undo, canUndo, countHint, opt
 
   return (
     <div class="nonogram">
+      <div class="board-area">
       <Board
         label={t.games.nonogram}
+        tall
         onStroke={onStroke}
-        draw={(ctx, size, theme) =>
-          draw(ctx, size, theme, puzzle, cells, {
+        onPinch={(cx, cy, factor, dx, dy, w, h) => setZoom((z) => pinch(puzzle, w, h, z, cx, cy, factor, dx, dy))}
+        draw={(ctx, w, h, theme) =>
+          draw(ctx, w, h, theme, puzzle, cells, {
+            zoom: view,
             wrong: red,
             slips: showSlips ? wrong : [],
             done: completeLines(puzzle, state),
@@ -167,6 +174,7 @@ export function View({ puzzle, state, ended, play, undo, canUndo, countHint, opt
           })
         }
       />
+      </div>
 
       <p class="message" aria-live="polite">
         {message}

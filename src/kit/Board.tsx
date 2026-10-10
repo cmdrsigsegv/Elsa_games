@@ -1,6 +1,6 @@
-// A square canvas that a game draws its board on. It handles the fiddly
-// parts: sharp drawing on high-density screens, resizing, colours that follow
-// light and dark mode, and turning a touch into a position on the board.
+// A canvas that a game draws its board on. It handles the fiddly parts: sharp
+// drawing on high-density screens, resizing, colours that follow light and
+// dark mode, and turning touches into taps, strokes and pinches.
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 
@@ -39,27 +39,42 @@ function readTheme(el: Element): Theme {
 }
 
 interface Props {
-  /** Draws the whole board into a `size` by `size` square. Called on every render. */
-  draw(ctx: CanvasRenderingContext2D, size: number, theme: Theme): void;
-  /** A touch at (x, y), each from 0 to `size`. */
-  onTap?(x: number, y: number, size: number): void;
+  /** Draws the whole board into a `width` by `height` area. Called on every render. */
+  draw(ctx: CanvasRenderingContext2D, width: number, height: number, theme: Theme): void;
+  /** A touch at (x, y), with x from 0 to `width`. */
+  onTap?(x: number, y: number, width: number): void;
   /**
-   * A finger put down, dragged, and lifted. 'cancel' means the phone took the
-   * touch away (a call, a system gesture): drop the stroke.
+   * One finger put down, dragged, and lifted. 'cancel' means the stroke must
+   * be dropped, not finished: a second finger arrived, or the phone took the
+   * touch away.
    */
-  onStroke?(phase: 'start' | 'move' | 'end' | 'cancel', x: number, y: number, size: number): void;
+  onStroke?(phase: 'start' | 'move' | 'end' | 'cancel', x: number, y: number, width: number, height: number): void;
+  /**
+   * Two fingers moving: `factor` is how much they spread (above 1) or closed
+   * since the last call, (dx, dy) how far their midpoint (cx, cy) moved.
+   * A mouse wheel arrives the same way.
+   */
+  onPinch?(cx: number, cy: number, factor: number, dx: number, dy: number, width: number, height: number): void;
+  /** Fill the space the screen gives it instead of being a square. */
+  tall?: boolean;
   label: string;
 }
 
-export function Board({ draw, onTap, onStroke, label }: Props) {
-  const stroking = useRef<number | null>(null);
+export function Board({ draw, onTap, onStroke, onPinch, tall, label }: Props) {
   const canvas = useRef<HTMLCanvasElement>(null);
-  const [size, setSize] = useState(0);
+  const [size, setSize] = useState({ w: 0, h: 0 });
   const [, repaint] = useState(0);
+
+  // Fingers on the board, and what they are doing. After a pinch, or with
+  // three fingers down, the board ignores everything until all are lifted, so
+  // a finger left behind never draws.
+  const fingers = useRef(new Map<number, { x: number; y: number }>());
+  const doing = useRef<'nothing' | 'stroke' | 'pinch' | 'ignoring'>('nothing');
+  const last = useRef({ cx: 0, cy: 0, spread: 1 });
 
   useEffect(() => {
     const el = canvas.current!;
-    const observer = new ResizeObserver(() => setSize(el.clientWidth));
+    const observer = new ResizeObserver(() => setSize({ w: el.clientWidth, h: el.clientHeight }));
     observer.observe(el);
     const scheme = matchMedia('(prefers-color-scheme: dark)');
     const onScheme = () => repaint((n) => n + 1);
@@ -67,10 +82,12 @@ export function Board({ draw, onTap, onStroke, label }: Props) {
     // Touches on the board are ours alone. Without this the browser also
     // reads a quick drag as a flick, and then swallows the next tap, wherever
     // it lands, as "stop the flick": a button pressed once did nothing.
-    const own = (e: TouchEvent) => e.preventDefault();
+    const own = (e: Event) => e.preventDefault();
     el.addEventListener('touchstart', own, { passive: false });
+    el.addEventListener('wheel', own, { passive: false });
     return () => {
       el.removeEventListener('touchstart', own);
+      el.removeEventListener('wheel', own);
       observer.disconnect();
       scheme.removeEventListener('change', onScheme);
     };
@@ -78,56 +95,84 @@ export function Board({ draw, onTap, onStroke, label }: Props) {
 
   useLayoutEffect(() => {
     const el = canvas.current!;
-    if (!size) return;
+    if (!size.w || !size.h) return;
     const dpr = window.devicePixelRatio || 1;
-    const pixels = Math.round(size * dpr);
-    if (el.width !== pixels) {
-      el.width = pixels;
-      el.height = pixels;
+    const pw = Math.round(size.w * dpr);
+    const ph = Math.round(size.h * dpr);
+    if (el.width !== pw || el.height !== ph) {
+      el.width = pw;
+      el.height = ph;
     }
     const ctx = el.getContext('2d')!;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, size, size);
-    draw(ctx, size, readTheme(el));
+    ctx.clearRect(0, 0, size.w, size.h);
+    draw(ctx, size.w, size.h, readTheme(el));
   });
+
+  const where = (e: PointerEvent | WheelEvent) => {
+    const box = canvas.current!.getBoundingClientRect();
+    return { x: e.clientX - box.left, y: e.clientY - box.top, w: box.width, h: box.height };
+  };
+
+  const midpoint = () => {
+    const [a, b] = [...fingers.current.values()];
+    return { cx: (a.x + b.x) / 2, cy: (a.y + b.y) / 2, spread: Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)) };
+  };
+
+  const lift = (e: PointerEvent, finish: boolean) => {
+    if (!fingers.current.delete(e.pointerId)) return;
+    if (doing.current === 'stroke') {
+      const at = where(e);
+      onStroke?.(finish ? 'end' : 'cancel', at.x, at.y, at.w, at.h);
+    }
+    doing.current = fingers.current.size === 0 ? 'nothing' : 'ignoring';
+  };
 
   return (
     <canvas
       ref={canvas}
-      class="board"
+      class={tall ? 'board tall' : 'board'}
       role="img"
       aria-label={label}
       onPointerDown={(e) => {
-        const box = e.currentTarget.getBoundingClientRect();
-        onTap?.(e.clientX - box.left, e.clientY - box.top, box.width);
-        if (!onStroke) return;
-        // No setPointerCapture: a touch already stays with the element it began on.
-        if (stroking.current !== null) onStroke('cancel', 0, 0, 0);
-        stroking.current = e.pointerId;
-        onStroke('start', e.clientX - box.left, e.clientY - box.top, box.width);
+        const at = where(e);
+        fingers.current.set(e.pointerId, at);
+        if (fingers.current.size === 1 && doing.current === 'nothing') {
+          onTap?.(at.x, at.y, at.w);
+          if (onStroke) {
+            doing.current = 'stroke';
+            onStroke('start', at.x, at.y, at.w, at.h);
+          }
+        } else if (fingers.current.size === 2 && doing.current !== 'ignoring') {
+          // A second finger: whatever the first had begun to draw is dropped.
+          if (doing.current === 'stroke') onStroke?.('cancel', 0, 0, at.w, at.h);
+          doing.current = onPinch ? 'pinch' : 'ignoring';
+          last.current = midpoint();
+        } else {
+          if (doing.current === 'stroke') onStroke?.('cancel', 0, 0, at.w, at.h);
+          doing.current = 'ignoring';
+        }
       }}
       onPointerMove={(e) => {
-        if (stroking.current !== e.pointerId) return;
-        const box = e.currentTarget.getBoundingClientRect();
-        onStroke?.('move', e.clientX - box.left, e.clientY - box.top, box.width);
+        if (!fingers.current.has(e.pointerId)) return;
+        const at = where(e);
+        fingers.current.set(e.pointerId, at);
+        if (doing.current === 'stroke') {
+          onStroke?.('move', at.x, at.y, at.w, at.h);
+        } else if (doing.current === 'pinch' && fingers.current.size === 2) {
+          const now = midpoint();
+          const was = last.current;
+          onPinch?.(now.cx, now.cy, now.spread / was.spread, now.cx - was.cx, now.cy - was.cy, at.w, at.h);
+          last.current = now;
+        }
       }}
-      onPointerUp={(e) => {
-        if (stroking.current !== e.pointerId) return;
-        stroking.current = null;
-        const box = e.currentTarget.getBoundingClientRect();
-        onStroke?.('end', e.clientX - box.left, e.clientY - box.top, box.width);
-      }}
-      onPointerLeave={(e) => {
-        // A mouse that wanders off the board ends its stroke at the edge.
-        if (stroking.current !== e.pointerId) return;
-        stroking.current = null;
-        const box = e.currentTarget.getBoundingClientRect();
-        onStroke?.('end', e.clientX - box.left, e.clientY - box.top, box.width);
-      }}
-      onPointerCancel={(e) => {
-        if (stroking.current !== e.pointerId) return;
-        stroking.current = null;
-        onStroke?.('cancel', 0, 0, 0);
+      onPointerUp={(e) => lift(e, true)}
+      // A mouse that wanders off the board ends its stroke at the edge.
+      onPointerLeave={(e) => lift(e, true)}
+      onPointerCancel={(e) => lift(e, false)}
+      onWheel={(e) => {
+        const at = where(e);
+        onPinch?.(at.x, at.y, e.deltaY < 0 ? 1.15 : 1 / 1.15, 0, 0, at.w, at.h);
       }}
     />
   );

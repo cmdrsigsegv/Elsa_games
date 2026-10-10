@@ -97,7 +97,7 @@ export function View({ puzzle, state, ended, play, undo, canUndo, countHint, opt
     <div class="sudoku">
       <Board
         label={t.games.sudoku}
-        draw={(ctx, size, theme) =>
+        draw={(ctx, size, _height, theme) =>
           draw(ctx, size, theme, puzzle, state, {
             selected: ended ? null : selected,
             hinted: hinting?.cell ?? null,

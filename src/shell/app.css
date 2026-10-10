@@ -17,8 +17,9 @@
   line-height: 1.4;
 }
 
+/* Dark colours: when the phone is dark and she has not chosen light, or when she has chosen dark. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     --bg: #1c1b19;
     --surface: #282623;
     --ink: #f1ede4;
@@ -30,7 +31,35 @@
     --tint-selected: #2f5a56;
     --tint-same: #2b4543;
     --tint-peer: #33312d;
+    color-scheme: dark;
   }
+}
+
+:root[data-theme='dark'] {
+  --bg: #1c1b19;
+  --surface: #282623;
+  --ink: #f1ede4;
+  --ink-quiet: #a39d92;
+  --line: #3b3833;
+  --accent: #7fc4bd;
+  --line-strong: #8f897d;
+  --wrong: #ff8a7a;
+  --tint-selected: #2f5a56;
+  --tint-same: #2b4543;
+  --tint-peer: #33312d;
+  color-scheme: dark;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+:root[data-text='large'] {
+  font-size: 20px;
+}
+
+:root[data-text='larger'] {
+  font-size: 22px;
 }
 
 * {
@@ -206,6 +235,25 @@ button {
   touch-action: none;
 }
 
+/* A board that takes all the height the screen has left. */
+.board-area {
+  flex: 1;
+  position: relative;
+  min-height: 16rem;
+}
+
+.board.tall {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+}
+
+.nonogram .message {
+  flex: none;
+}
+
 .sudoku,
 .nonogram {
   flex: 1;
@@ -370,4 +418,105 @@ button {
   display: flex;
   justify-content: space-between;
   margin-top: 0.5rem;
+}
+
+/* --- Statistics and settings pages --- */
+
+.page {
+  flex: 1;
+  width: 100%;
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 0 0.75rem 1.5rem;
+  position: relative;
+}
+
+.setting {
+  margin-top: 1.25rem;
+}
+
+.setting h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+.setting p {
+  margin: 0 0 0.75rem;
+  color: var(--ink-quiet);
+  font-size: 0.9rem;
+}
+
+.setting .ratings button {
+  background: var(--surface);
+}
+
+.setting .ratings button.on {
+  background: var(--tint-selected);
+}
+
+.ratings.stacked {
+  grid-auto-flow: row;
+}
+
+.warning {
+  color: var(--wrong) !important;
+}
+
+.page .sheet {
+  position: fixed;
+  max-width: 34rem;
+  margin: 0 auto;
+}
+
+.figures {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.figures div {
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  background: var(--surface);
+}
+
+.figures dt {
+  color: var(--ink-quiet);
+  font-size: 0.8rem;
+}
+
+.figures dd {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.level-line {
+  margin: 0.75rem 0 0;
+}
+
+.level-line svg {
+  display: block;
+  width: 100%;
+  height: 4rem;
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  background: var(--surface);
+}
+
+.level-line figcaption {
+  margin-top: 0.3rem;
+  color: var(--ink-quiet);
+  font-size: 0.8rem;
+}
+
+.home-links {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
 }

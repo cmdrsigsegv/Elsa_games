@@ -9,7 +9,7 @@ interface Info {
   level: number;
 }
 
-export function Home({ onOpen }: { onOpen(game: Game): void }) {
+export function Home({ onOpen, onStats, onSettings }: { onOpen(game: Game): void; onStats(): void; onSettings(): void }) {
   const [info, setInfo] = useState<Record<string, Info>>({});
 
   useEffect(() => {
@@ -38,6 +38,14 @@ export function Home({ onOpen }: { onOpen(game: Game): void }) {
           </li>
         ))}
       </ul>
+      <nav class="home-links">
+        <button type="button" class="ghost" onClick={onStats}>
+          {t.home.statistics}
+        </button>
+        <button type="button" class="ghost" onClick={onSettings}>
+          {t.home.settings}
+        </button>
+      </nav>
       <footer class="version">{t.version(__APP_VERSION__)}</footer>
     </main>
   );

@@ -3,11 +3,14 @@
 import type { AdaptiveTuning } from '../../kit/adaptive';
 
 export const tuning = {
-  /** Difficulty runs from 0 to 100, the same scale idea as every other game. */
+  /**
+   * Difficulty runs from 0 to 100. She is used to large picture nonograms, so
+   * 15 by 15 sits low on the scale and the top is 30 by 30.
+   */
   adaptive: {
     startLevel: 30,
-    floor: 5,
-    ceiling: 96,
+    floor: 3,
+    ceiling: 98,
     startStep: 8,
     minStep: 2,
     silentWeight: 0.4,
@@ -23,11 +26,12 @@ export const tuning = {
    * `hardRounds` scores `to`.
    */
   bands: [
-    { size: 5, from: 5, to: 16, easyRounds: 1, hardRounds: 4 },
-    { size: 8, from: 16, to: 32, easyRounds: 2, hardRounds: 6 },
-    { size: 10, from: 32, to: 54, easyRounds: 2, hardRounds: 8 },
-    { size: 12, from: 54, to: 72, easyRounds: 3, hardRounds: 9 },
-    { size: 15, from: 72, to: 100, easyRounds: 3, hardRounds: 11 },
+    { size: 5, from: 3, to: 10, easyRounds: 1, hardRounds: 4 },
+    { size: 10, from: 10, to: 25, easyRounds: 2, hardRounds: 8 },
+    { size: 15, from: 25, to: 45, easyRounds: 3, hardRounds: 9 },
+    { size: 20, from: 45, to: 65, easyRounds: 4, hardRounds: 11 },
+    { size: 25, from: 65, to: 82, easyRounds: 5, hardRounds: 13 },
+    { size: 30, from: 82, to: 100, easyRounds: 6, hardRounds: 14 },
   ],
 
   /** The share of cells that are filled is picked at random between these. */
@@ -46,5 +50,4 @@ export const tuning = {
   mistakes: 'never' as 'never' | 'always',
   /** With 'never': offer to show the slips once this many wrong squares are sitting unnoticed. */
   offerRevealAfter: 3,
-  showTimer: false,
 };

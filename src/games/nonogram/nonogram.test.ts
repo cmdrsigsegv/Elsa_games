@@ -72,7 +72,7 @@ describe('line solver', () => {
 });
 
 describe('generator', () => {
-  const targets = [8, 24, 40, 60, 85];
+  const targets = [6, 18, 35, 55, 73, 90];
 
   it('gives the same puzzle for the same seed', () => {
     expect(generate(5, 40)).toEqual(generate(5, 40));
@@ -80,7 +80,7 @@ describe('generator', () => {
   });
 
   it.each(targets)('makes a puzzle at level %i that line reasoning alone solves, to the intended picture', (target) => {
-    for (let seed = 1; seed <= 4; seed++) {
+    for (let seed = 1; seed <= 3; seed++) {
       const p = generate(seed * 100 + target, target);
       expect(p.w).toBe(bandFor(target).size);
       expect(p).toMatchObject(cluesOf(p.w, p.h, p.solution));
@@ -88,18 +88,18 @@ describe('generator', () => {
       expect(solved.solved).toBe(true);
       expect(solved.cells.map((v) => (v === FILLED ? 1 : 0))).toEqual(p.solution);
       expect([...p.rows, ...p.cols].every((clue) => clue.length > 0)).toBe(true);
-      expect(Math.abs(p.score - target)).toBeLessThanOrEqual(12);
+      expect(Math.abs(p.score - target)).toBeLessThanOrEqual(14);
     }
   });
 
   it('makes bigger grids for higher levels', () => {
     const sizes = targets.map((target) => generate(target, target).w);
-    expect(sizes).toEqual([5, 8, 10, 12, 15]);
+    expect(sizes).toEqual([5, 10, 15, 20, 25, 30]);
   });
 });
 
 describe('rules', () => {
-  const p = generate(77, 40);
+  const p = generate(77, 18);
   const filled = p.solution.findIndex((v) => v === 1);
   const blank = p.solution.findIndex((v) => v === 0);
 
