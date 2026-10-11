@@ -14,6 +14,8 @@ export interface Session<P extends PuzzleBase = PuzzleBase, S = unknown> {
   hints: number;
   mistakes: number;
   ended: boolean;
+  /** True when it ended in defeat rather than a solution. */
+  lost?: boolean;
 }
 
 /** Undo goes back this far at most. */
@@ -36,6 +38,7 @@ export function play<P extends PuzzleBase, S, M>(game: Game<P, S, M>, session: S
     history: [...session.history, after].slice(-HISTORY_LIMIT),
     mistakes: session.mistakes + (game.isMistake(session.puzzle, before, move) ? 1 : 0),
     ended: game.status(session.puzzle, after).ended,
+    lost: game.status(session.puzzle, after).lost ?? false,
   };
 }
 

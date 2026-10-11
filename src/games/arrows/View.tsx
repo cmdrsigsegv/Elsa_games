@@ -7,6 +7,7 @@ import type { ViewProps } from '../../kit/game';
 import { t } from '../../shell/strings';
 import { cellAt, draw, layout } from './draw';
 import { head, hint, owners, ray, type ArrowsMove, type ArrowsPuzzle, type ArrowsState } from './rules';
+import { tuning } from './tuning';
 
 type Props = ViewProps<ArrowsPuzzle, ArrowsState, ArrowsMove>;
 
@@ -85,6 +86,10 @@ export function View({ puzzle, state, ended, play, undo, canUndo, countHint }: P
       </div>
 
       <p class="message" aria-live="polite">
+        <span class="lives" aria-label={t.arrows.lives(tuning.lives - state.bumps)}>
+          {'♥'.repeat(Math.max(0, tuning.lives - state.bumps))}
+          {'♡'.repeat(Math.min(tuning.lives, state.bumps))}
+        </span>{' '}
         {bump.current ? t.arrows.blocked : hinted !== null && !state.gone[hinted] ? t.arrows.hinted : t.arrows.left(state.gone.filter((g) => !g).length)}
       </p>
 

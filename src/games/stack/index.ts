@@ -1,11 +1,11 @@
 import type { Game } from '../../kit/game';
 import { t } from '../../shell/strings';
-import { apply, start, status, type BlocksMove, type BlocksPuzzle, type BlocksState } from './rules';
+import { apply, start, status, type StackMove, type StackPuzzle, type StackState } from './rules';
 import { tuning } from './tuning';
 import { View } from './View';
 
-export const blocks: Game<BlocksPuzzle, BlocksState, BlocksMove> = {
-  id: 'blocks',
+export const stack: Game<StackPuzzle, StackState, StackMove> = {
+  id: 'stack',
   adaptive: tuning.adaptive,
   options: [],
   start,

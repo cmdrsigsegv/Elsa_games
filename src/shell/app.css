@@ -256,7 +256,8 @@ button {
 }
 
 .sudoku,
-.blocks,
+.gridlock,
+.stack,
 .arrows,
 .nonogram {
   flex: 1;
@@ -336,6 +337,10 @@ button {
 
 .tools .swatch.fill {
   background: var(--ink);
+}
+
+.tools.one {
+  grid-template-columns: 1fr;
 }
 
 .tools.two {
@@ -537,6 +542,11 @@ button {
   display: block;
   margin: 0 auto;
   font-size: 0.8rem;
+}
+
+.lives {
+  color: var(--wrong);
+  letter-spacing: 0.1em;
 }
 
 .scoreline {

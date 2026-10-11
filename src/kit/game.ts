@@ -46,7 +46,8 @@ export interface Game<P extends PuzzleBase = any, S = any, M = any> {
   start(puzzle: P): S;
   /** Returns the same state object when the move changes nothing. */
   apply(puzzle: P, state: S, move: M): S;
-  status(puzzle: P, state: S): { ended: boolean };
+  /** `lost` marks an ending that is a defeat (out of lives, no room left) rather than a solution. */
+  status(puzzle: P, state: S): { ended: boolean; lost?: boolean };
   isMistake(puzzle: P, state: S, move: M): boolean;
 
   /**

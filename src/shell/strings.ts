@@ -12,7 +12,7 @@ const en = {
   appName: "Elsa's Games",
   version: (v: string) => `Version ${v}`,
 
-  games: { sudoku: 'Sudoku', nonogram: 'Nonogram', arrows: 'Arrows', blocks: 'Blocks' } as Record<string, string>,
+  games: { sudoku: 'Sudoku', nonogram: 'Nonogram', arrows: 'Arrows', stack: 'Blocks', gridlock: 'Gridlock' } as Record<string, string>,
 
   /** Words for each game's options: options.<game id>.<option key>. */
   options: {
@@ -142,12 +142,22 @@ const en = {
     left: (n: number) => (n === 1 ? '1 arrow left' : `${n} arrows left`),
     blocked: 'Another arrow is in the way.',
     hinted: 'This arrow can go.',
+    lives: (n: number) => (n === 1 ? '1 life left' : `${n} lives left`),
+  },
+
+  gridlock: {
+    undo: 'Undo',
+    hint: 'Hint',
+    moves: (n: number) => (n === 1 ? '1 slide' : `${n} slides`),
+    par: (n: number) => `Can be done in ${n}`,
+    hinted: 'Slide this one. Tap Hint again to see where.',
   },
 
   blocks: {
     score: (n: number) => `Score ${n}`,
     best: (n: number) => `Best ${n}`,
     newBest: 'New best!',
+    pass: 'Leave it and drop',
   },
 };
 
@@ -159,7 +169,7 @@ const af: Strings = {
   appName: 'Elsa se Speletjies',
   version: (v) => `Weergawe ${v}`,
 
-  games: { sudoku: 'Sudoku', nonogram: 'Nonogram', arrows: 'Pyle', blocks: 'Blokke' },
+  games: { sudoku: 'Sudoku', nonogram: 'Nonogram', arrows: 'Pyle', stack: 'Blokke', gridlock: 'Verkeersknoop' },
 
   options: {
     sudoku: {
@@ -287,12 +297,22 @@ const af: Strings = {
     left: (n) => (n === 1 ? '1 pyl oor' : `${n} pyle oor`),
     blocked: '’n Ander pyl is in die pad.',
     hinted: 'Hierdie pyl kan gaan.',
+    lives: (n) => (n === 1 ? '1 lewe oor' : `${n} lewens oor`),
+  },
+
+  gridlock: {
+    undo: 'Ontdoen',
+    hint: 'Wenk',
+    moves: (n) => (n === 1 ? '1 skuif' : `${n} skuiwe`),
+    par: (n) => `Kan in ${n} gedoen word`,
+    hinted: 'Skuif hierdie een. Tik weer op Wenk om te sien waarheen.',
   },
 
   blocks: {
     score: (n) => `Telling ${n}`,
     best: (n) => `Beste ${n}`,
     newBest: 'Nuwe beste!',
+    pass: 'Los dit en laat val',
   },
 };
 

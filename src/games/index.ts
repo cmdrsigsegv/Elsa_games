@@ -3,8 +3,9 @@
 
 import type { Game } from '../kit/game';
 import { arrows } from './arrows';
-import { blocks } from './blocks';
+import { gridlock } from './gridlock';
 import { nonogram } from './nonogram';
+import { stack } from './stack';
 import { sudoku } from './sudoku';
 
-export const games: Game[] = [sudoku, nonogram, arrows, blocks];
+export const games: Game[] = [sudoku, nonogram, arrows, gridlock, stack];

@@ -52,7 +52,7 @@ export function draw(ctx: CanvasRenderingContext2D, w: number, h: number, theme:
 
   // A dot on every cell, so the board keeps its shape as it empties.
   ctx.fillStyle = theme.line;
-  for (let c = 0; c < p.w * p.h; c++) {
+  for (const c of p.cells) {
     const [x, y] = centre(c);
     ctx.beginPath();
     ctx.arc(x, y, Math.max(1, cell * 0.05), 0, Math.PI * 2);
@@ -77,7 +77,7 @@ export function draw(ctx: CanvasRenderingContext2D, w: number, h: number, theme:
 
     ctx.strokeStyle = colour;
     ctx.fillStyle = colour;
-    ctx.lineWidth = cell * 0.24;
+    ctx.lineWidth = Math.max(2, cell * 0.2);
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.beginPath();
@@ -87,8 +87,8 @@ export function draw(ctx: CanvasRenderingContext2D, w: number, h: number, theme:
     for (const [x, y] of body.slice(1)) ctx.lineTo(x, y);
     ctx.stroke();
 
-    const a0 = cell * 0.4;
-    const half = cell * 0.3;
+    const a0 = cell * 0.42;
+    const half = cell * 0.32;
     ctx.beginPath();
     ctx.moveTo(tip[0] + ux * a0, tip[1] + uy * a0);
     ctx.lineTo(tip[0] - ux * cell * 0.08 - uy * half, tip[1] - uy * cell * 0.08 + ux * half);

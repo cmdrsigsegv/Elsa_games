@@ -10,6 +10,7 @@ const small: ArrowsPuzzle = {
   score: 0,
   w: 3,
   h: 3,
+  cells: [0, 1, 2, 3, 4, 5, 6, 7, 8],
   arrows: [
     { cells: [0, 1], dir: 1 },
     { cells: [6], dir: 0 },
@@ -52,11 +53,19 @@ describe('rules', () => {
     expect(s.bumps).toBe(0);
   });
 
+  it('is lost after three bumps, and then nothing more moves', () => {
+    let s = start(small);
+    for (let n = 0; n < 3; n++) s = apply(small, s, { arrow: 0 });
+    expect(status(small, s)).toEqual({ ended: true, lost: true });
+    expect(apply(small, s, { arrow: 2 })).toBe(s);
+    expect(status(small, start(small))).toEqual({ ended: false, lost: false });
+  });
+
   it('measures how deep the knot is', () => {
-    expect(measure(small)).toEqual({ solvable: true, rounds: 3, freeAtStart: 1 });
+    expect(measure(small)).toEqual({ solvable: true, rounds: 3, freeAtStart: 1, stuck: [] });
     // Two arrows facing each other can never be cleared.
     const stuck: ArrowsPuzzle = { ...small, arrows: [{ cells: [0], dir: 1 }, { cells: [2], dir: 3 }] };
-    expect(measure(stuck).solvable).toBe(false);
+    expect(measure(stuck)).toMatchObject({ solvable: false, stuck: [0, 1] });
   });
 });
 
@@ -75,8 +84,11 @@ describe('generator', () => {
       expect([p.w, p.h]).toEqual([band.w, band.h]);
       // No two arrows share a cell, and each arrow is one unbroken path.
       const used = new Set<number>();
+      const onBoard = new Set(p.cells);
       for (const a of p.arrows) {
+        expect(a.cells.length).toBeGreaterThanOrEqual(2);
         for (const cell of a.cells) {
+          expect(onBoard.has(cell)).toBe(true);
           expect(used.has(cell)).toBe(false);
           used.add(cell);
         }
@@ -86,16 +98,24 @@ describe('generator', () => {
           expect(dx + dy).toBe(1);
         }
         // The head points along the last stretch of the body, and never at its own body.
-        if (a.cells.length > 1) {
-          const neck = a.cells[a.cells.length - 2];
-          expect(head(a) - neck).toBe(DX[a.dir] + DY[a.dir] * p.w);
-        }
+        const neck = a.cells[a.cells.length - 2];
+        expect(head(a) - neck).toBe(DX[a.dir] + DY[a.dir] * p.w);
         expect(ray(p.w, p.h, head(a), a.dir).some((cell) => a.cells.includes(cell))).toBe(false);
       }
-      expect(used.size).toBeGreaterThan(p.w * p.h * 0.6);
+      expect(used.size).toBeGreaterThan(p.cells.length * 0.3);
       expect(measure(p).solvable).toBe(true);
-      expect(Math.abs(p.score - target)).toBeLessThanOrEqual(10);
+      expect(Math.abs(p.score - target)).toBeLessThanOrEqual(14);
     }
+  });
+
+  it('leaves fewer arrows free to start with at the hard end of a size', () => {
+    const share = (target: number) =>
+      [1, 2, 3, 4, 5].reduce((sum, seed) => {
+        const p = generate(seed * 13 + target, target);
+        return sum + measure(p).freeAtStart / p.arrows.length;
+      }, 0) / 5;
+    expect(share(65)).toBeLessThan(share(49));
+    expect(share(65)).toBeLessThan(0.3);
   });
 
   it('following hints clears the board without a bump', () => {

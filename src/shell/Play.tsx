@@ -123,6 +123,8 @@ export function Play({ game, onExit }: { game: Game; onExit(): void }) {
   const next = async (rating: Rating | null, abandoned: boolean) => {
     if (!session || !skill) return;
     let after = skill;
+    // Running out of lives counts like giving up; a game that always ends in defeat is judged by its score instead.
+    const gaveUp = abandoned || (session.lost === true && !game.effort);
     if (!abandoned || started(session)) {
       after = update(
         skill,
@@ -132,7 +134,7 @@ export function Play({ game, onExit }: { game: Game; onExit(): void }) {
           timeMs: game.effort ? game.effort(session.puzzle, current(session)) : elapsed(),
           hints: session.hints,
           mistakes: session.mistakes,
-          abandoned,
+          abandoned: gaveUp,
         },
         game.adaptive,
       );
@@ -201,8 +203,8 @@ export function Play({ game, onExit }: { game: Game; onExit(): void }) {
       )}
 
       {session?.ended && (
-        <div class="sheet" role="dialog" aria-label={game.endSummary ? t.play.gameOver : t.play.solved}>
-          <h2>{game.endSummary ? t.play.gameOver : t.play.solved}</h2>
+        <div class="sheet" role="dialog" aria-label={session.lost ? t.play.gameOver : t.play.solved}>
+          <h2>{session.lost ? t.play.gameOver : t.play.solved}</h2>
           <p class="summary">
             {game.endSummary?.(session.puzzle, current(session)) ?? clockText(elapsed())}
             {session.hints > 0 && ` · ${t.play.hints(session.hints)}`}

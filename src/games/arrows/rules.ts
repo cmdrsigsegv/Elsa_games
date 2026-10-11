@@ -22,6 +22,8 @@ export interface ArrowsPuzzle {
   w: number;
   h: number;
   arrows: Arrow[];
+  /** The cells that are part of the board; it need not be a rectangle. */
+  cells: number[];
 }
 
 export interface ArrowsState {
@@ -74,19 +76,22 @@ export function start(p: ArrowsPuzzle): ArrowsState {
 
 /** Returns the same state object when the move changes nothing. */
 export function apply(p: ArrowsPuzzle, s: ArrowsState, m: ArrowsMove): ArrowsState {
-  if (m.arrow < 0 || m.arrow >= p.arrows.length || s.gone[m.arrow]) return s;
+  if (m.arrow < 0 || m.arrow >= p.arrows.length || s.gone[m.arrow] || lost(s)) return s;
   const into = blocker(p, s, m.arrow);
   if (into >= 0) return { ...s, bumps: s.bumps + 1, lastBump: { arrow: m.arrow, into } };
   return { ...s, gone: s.gone.map((g, i) => g || i === m.arrow), lastBump: null };
 }
 
-export function status(_p: ArrowsPuzzle, s: ArrowsState): { ended: boolean } {
-  return { ended: s.gone.every(Boolean) };
+/** Out of lives: every bump costs one. */
+export const lost = (s: ArrowsState) => s.bumps >= tuning.lives;
+
+export function status(_p: ArrowsPuzzle, s: ArrowsState): { ended: boolean; lost: boolean } {
+  return { ended: s.gone.every(Boolean) || lost(s), lost: lost(s) };
 }
 
-/** Sending an arrow into another counts against her, when the tuning says so. */
+/** Sending an arrow into another is a mistake. */
 export function isMistake(p: ArrowsPuzzle, s: ArrowsState, m: ArrowsMove): boolean {
-  return tuning.bumpsCount && !s.gone[m.arrow] && blocker(p, s, m.arrow) >= 0;
+  return !s.gone[m.arrow] && blocker(p, s, m.arrow) >= 0;
 }
 
 /** An arrow that can leave now. Arrows near the middle of the list sit deeper in the knot, so they are offered first. */
@@ -101,17 +106,21 @@ export function hint(p: ArrowsPuzzle, s: ArrowsState): ArrowsMove | null {
  * once, and how many arrows are free at the start. Clearing an arrow never
  * blocks another, so a board that this clears can always be cleared.
  */
-export function measure(p: ArrowsPuzzle): { solvable: boolean; rounds: number; freeAtStart: number } {
+export function measure(p: ArrowsPuzzle): { solvable: boolean; rounds: number; freeAtStart: number; stuck: number[] } {
   let s = start(p);
   let rounds = 0;
   let freeAtStart = 0;
-  while (!status(p, s).ended) {
+  while (!s.gone.every(Boolean)) {
     const owner = owners(p, s.gone);
     const free = p.arrows.map((_, i) => !s.gone[i] && blocker(p, s, i, owner) < 0);
-    if (!free.some(Boolean)) return { solvable: false, rounds, freeAtStart };
+    if (!free.some(Boolean)) {
+      // What is left can never leave: these arrows are in each other's way.
+      const stuck = p.arrows.map((_, i) => i).filter((i) => !s.gone[i]);
+      return { solvable: false, rounds, freeAtStart, stuck };
+    }
     if (rounds === 0) freeAtStart = free.filter(Boolean).length;
     s = { ...s, gone: s.gone.map((g, i) => g || free[i]) };
     rounds++;
   }
-  return { solvable: true, rounds, freeAtStart };
+  return { solvable: true, rounds, freeAtStart, stuck: [] };
 }
