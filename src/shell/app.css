@@ -251,7 +251,6 @@ button {
 }
 
 .pour .message,
-.arrows .message,
 .nonogram .message {
   flex: none;
 }
@@ -260,7 +259,6 @@ button {
 .pour,
 .gridlock,
 .stack,
-.arrows,
 .nonogram {
   flex: 1;
   display: flex;
@@ -349,7 +347,6 @@ button {
   grid-template-columns: repeat(2, 1fr);
 }
 
-.arrows .tools button,
 .nonogram .tools button {
   min-height: 3.6rem;
 }
@@ -544,11 +541,6 @@ button {
   display: block;
   margin: 0 auto;
   font-size: 0.8rem;
-}
-
-.lives {
-  color: var(--wrong);
-  letter-spacing: 0.1em;
 }
 
 .scoreline {

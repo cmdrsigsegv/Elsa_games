@@ -12,7 +12,7 @@ const en = {
   appName: "Elsa's Games",
   version: (v: string) => `Version ${v}`,
 
-  games: { sudoku: 'Sudoku', nonogram: 'Nonogram', arrows: 'Arrows', stack: 'Blocks', gridlock: 'Gridlock', pour: 'Liquids' } as Record<string, string>,
+  games: { sudoku: 'Sudoku', nonogram: 'Nonogram', stack: 'Blocks', gridlock: 'Gridlock', pour: 'Liquids' } as Record<string, string>,
 
   /** Words for each game's options: options.<game id>.<option key>. */
   options: {
@@ -140,16 +140,6 @@ const en = {
       n === 1 ? 'The square in red is wrong.' : `The ${n} squares in red are wrong. It started at number 1.`,
   },
 
-  arrows: {
-    undo: 'Undo',
-    hint: 'Hint',
-    left: (n: number) => (n === 1 ? '1 arrow left' : `${n} arrows left`),
-    blocked: 'It cannot move: another arrow is right in front of it.',
-    hinted: 'Tap this one next.',
-    stuck: 'Nothing can move. Undo, or restart.',
-    lost: 'It cannot be cleared from here. Undo a few taps.',
-  },
-
   gridlock: {
     undo: 'Undo',
     moves: (n: number) => (n === 1 ? '1 slide' : `${n} slides`),
@@ -179,7 +169,7 @@ const af: Strings = {
   appName: 'Elsa se Speletjies',
   version: (v) => `Weergawe ${v}`,
 
-  games: { sudoku: 'Sudoku', nonogram: 'Nonogram', arrows: 'Pyle', stack: 'Blokke', gridlock: 'Verkeersknoop', pour: 'Vloeistowwe' },
+  games: { sudoku: 'Sudoku', nonogram: 'Nonogram', stack: 'Blokke', gridlock: 'Verkeersknoop', pour: 'Vloeistowwe' },
 
   options: {
     sudoku: {
@@ -303,16 +293,6 @@ const af: Strings = {
     showMe: 'Wys my',
     slips: (n) =>
       n === 1 ? 'Die blokkie in rooi is verkeerd.' : `Die ${n} blokkies in rooi is verkeerd. Dit het by nommer 1 begin.`,
-  },
-
-  arrows: {
-    undo: 'Ontdoen',
-    hint: 'Wenk',
-    left: (n) => (n === 1 ? '1 pyl oor' : `${n} pyle oor`),
-    blocked: 'Dit kan nie beweeg nie: ’n ander pyl is reg voor dit.',
-    hinted: 'Tik volgende op hierdie een.',
-    stuck: 'Niks kan beweeg nie. Ontdoen, of begin oor.',
-    lost: 'Dit kan nie van hier af skoongemaak word nie. Ontdoen ’n paar tikke.',
   },
 
   gridlock: {

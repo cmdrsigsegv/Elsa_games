@@ -40,21 +40,29 @@ export function seedFor(gameId: string, at: Place): number {
 }
 
 /**
- * The generator level (0 to 100) for a puzzle. A difficulty covers ten
- * levels, and a set climbs gently through them. The last puzzle of a set is,
- * without saying so, a taste of the next difficulty.
+ * The generators work to a level from 0 to 100. The lowest levels are too
+ * easy to be worth playing, so difficulty 1 starts at EASIEST_LEVEL and the
+ * ten difficulties share out the rest.
+ */
+export const EASIEST_LEVEL = 40;
+const LEVELS_EACH = (100 - EASIEST_LEVEL) / DIFFICULTIES;
+
+/**
+ * The generator level for a puzzle. A set climbs gently through its
+ * difficulty's levels. The last puzzle of a set is, without saying so, a
+ * taste of the next difficulty.
  */
 export function levelFor(at: Place): number {
   const preview = at.index === SET_SIZE - 1 && at.difficulty < DIFFICULTIES;
   const difficulty = preview ? at.difficulty + 1 : at.difficulty;
   const climb = preview ? 0.2 : at.index / (SET_SIZE - 1);
-  return (difficulty - 1) * 10 + 1 + climb * 8;
+  return EASIEST_LEVEL + (difficulty - 1 + climb * 0.85) * LEVELS_EACH;
 }
 
 const key = (gameId: string) => `progress:${gameId}`;
 
 export async function loadProgress(gameId: string): Promise<Progress> {
-  return (await load<Progress>(key(gameId))) ?? { difficulty: 3, sets: {} };
+  return (await load<Progress>(key(gameId))) ?? { difficulty: 1, sets: {} };
 }
 export const saveProgress = (gameId: string, p: Progress) => save(key(gameId), p);
 

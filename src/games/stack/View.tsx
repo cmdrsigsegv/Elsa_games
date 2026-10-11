@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { Board, type Theme } from '../../kit/Board';
 import type { ViewProps } from '../../kit/game';
 import { t } from '../../shell/strings';
+import { EASIEST_LEVEL } from '../../kit/progress';
 import { load, save } from '../../storage/kv';
 import { H, W, cover, play as playMove, reach, type Block, type Coming, type Frame, type StackMove, type StackPuzzle, type StackState } from './rules';
 
@@ -163,7 +164,7 @@ export function View({ puzzle, state, ended, play }: Props) {
   const [, frame] = useState(0);
   // Her best score at this difficulty before this game, and whether this game has passed it.
   const [best, setBest] = useState<number | null>(null);
-  const bestKey = `best:stack:${Math.floor(puzzle.score / 10) + 1}`;
+  const bestKey = `best:stack:${Math.floor((puzzle.score - EASIEST_LEVEL) / 6) + 1}`;
 
   useEffect(() => {
     void load<number>(bestKey).then((saved) => setBest(saved ?? 0));
