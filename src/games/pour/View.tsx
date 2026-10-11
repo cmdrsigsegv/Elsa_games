@@ -13,6 +13,7 @@ type Props = ViewProps<PourPuzzle, PourState, PourMove>;
 const COLOURS = [
   '#e04f4f', '#3f7fe0', '#4caf50', '#f0b429', '#9c5fd6', '#f07c2e',
   '#2bb5b5', '#e86aa6', '#8d6e4c', '#7f8c99', '#a8d04a', '#34558b',
+  '#2d2d34', '#f6d9c0', '#0f6b5c', '#c6a8f0',
 ];
 
 interface Layout {
@@ -21,8 +22,8 @@ interface Layout {
 }
 
 function layout(count: number, w: number, h: number): Layout {
-  // One row while they fit comfortably, else two.
-  const rows = count > 7 ? 2 : 1;
+  // One row while they fit comfortably, then two, then three.
+  const rows = count > 14 ? 3 : count > 7 ? 2 : 1;
   const perRow = Math.ceil(count / rows);
   const slot = Math.min(w / perRow, 86);
   const vw = slot * 0.62;

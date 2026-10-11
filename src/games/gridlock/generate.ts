@@ -7,11 +7,27 @@
 // for an easy one. So the number of slides needed is known exactly.
 
 import { random, type Random } from '../../kit/random';
+import { HARD } from './hard';
 import { EXIT_ROW, N, cover, neighbours, solved, type Car, type GridlockPuzzle } from './rules';
 import { tuning } from './tuning';
 
-export const slidesFor = (level: number) => Math.round(tuning.easiest + (level / 100) * (tuning.hardest - tuning.easiest));
-export const scoreFor = (slides: number) => Math.min(100, Math.max(0, ((slides - tuning.easiest) / (tuning.hardest - tuning.easiest)) * 100));
+/** The most slides any puzzle in the mined list needs. */
+const TOP = HARD.length ? HARD[HARD.length - 1].par : tuning.hardest;
+
+/** How many slides a puzzle at a level should need. */
+export function slidesFor(level: number): number {
+  if (level <= tuning.minedFrom) return Math.round(tuning.easiest + (level / tuning.minedFrom) * (tuning.hardest - tuning.easiest));
+  return Math.round(tuning.hardest + ((level - tuning.minedFrom) / (100 - tuning.minedFrom)) * (TOP - tuning.hardest));
+}
+
+/** The level a puzzle needing this many slides belongs at: slidesFor, backwards. */
+export function scoreFor(slides: number): number {
+  if (slides <= tuning.hardest) return Math.max(0, ((slides - tuning.easiest) / (tuning.hardest - tuning.easiest)) * tuning.minedFrom);
+  return Math.min(100, tuning.minedFrom + ((slides - tuning.hardest) / Math.max(1, TOP - tuning.hardest)) * (100 - tuning.minedFrom));
+}
+
+/** Reads a car as hard.ts writes it: its length, h or v, and its row or column. */
+export const parseCar = (text: string): Car => ({ len: Number(text[0]), horizontal: text[1] === 'h', line: Number(text[2]) });
 
 function park(rng: Random): { cars: Car[]; at: number[] } {
   const cars: Car[] = [{ len: 2, horizontal: true, line: EXIT_ROW }];
@@ -80,6 +96,13 @@ function survey(cars: Car[], from: number[]): { at: number[]; slides: number }[]
 export function generate(seed: number, target: number): GridlockPuzzle {
   const rng = random(seed);
   const want = slidesFor(target);
+  if (target > tuning.minedFrom && HARD.length) {
+    // Of the mined puzzles nearest the wanted number of slides, one chosen by the seed.
+    const gap = Math.min(...HARD.map((h) => Math.abs(h.par - want)));
+    const near = HARD.filter((h) => Math.abs(h.par - want) <= gap + 1);
+    const pick = near[rng.int(near.length)];
+    return { seed, score: scoreFor(pick.par), cars: pick.cars.split(' ').map(parseCar), start: [...pick.start], par: pick.par };
+  }
   let best: GridlockPuzzle | null = null;
   const attempts = tuning.attempts + Math.round(target * tuning.extraAttemptsPerLevel);
   for (let attempt = 0; attempt < attempts; attempt++) {

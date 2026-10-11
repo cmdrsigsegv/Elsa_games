@@ -7,13 +7,15 @@
 //   42-54  locked candidates
 //   56-67  pairs
 //   69-78  triples
-//   80-100 X-wing and XY-wing
+//   80-92  X-wing and XY-wing
+//   100    beyond all of those: one solution, but no named technique here finds the way
 
 import type { Solved } from './solve';
 
 const clamp = (x: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, x));
 
 export function score(s: Solved, empties: number): number {
+  if (!s.solved) return 100;
   const u = s.uses;
   const pairs = u.nakedPair + u.hiddenPair;
   const triples = u.nakedTriple + u.hiddenTriple;
@@ -31,9 +33,13 @@ export function score(s: Solved, empties: number): number {
     case 5:
       return 69 + Math.min(9, triples * 3 + pairs);
     default:
-      return 80 + Math.min(20, wings * 5 + triples * 2 + pairs);
+      return 80 + Math.min(12, wings * 4 + triples * 2 + pairs);
   }
 }
+
+/** The tier above every named technique: a puzzle the solver cannot finish. */
+export const BEYOND = 7;
+const BEYOND_FROM = 93;
 
 /** The hardest technique tier a puzzle aimed at `level` is allowed to need. */
 export function tierFor(level: number): number {
@@ -42,7 +48,8 @@ export function tierFor(level: number): number {
   if (level < 55) return 3;
   if (level < 68) return 4;
   if (level < 79) return 5;
-  return 6;
+  if (level < BEYOND_FROM) return 6;
+  return BEYOND;
 }
 
 /** In the easiest band difficulty is set by how many cells are left empty. */

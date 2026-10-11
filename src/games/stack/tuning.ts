@@ -13,7 +13,7 @@ export const tuning = {
   extraBlocks: [
     [0.55, 1],
     [0.1, 0.9],
-    [0, 0.5],
+    [0, 0.8],
   ],
   /**
    * How likely each length of block is, shortest first, as [weight at level
@@ -23,7 +23,7 @@ export const tuning = {
     [1.2, 0.5],
     [1.2, 1],
     [0.7, 1.3],
-    [0.3, 1.1],
+    [0.3, 1.6],
   ],
 
   /** Points for each row cleared: this, times its place in the chain reaction (first, second, ...). */

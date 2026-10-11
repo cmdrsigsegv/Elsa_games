@@ -3,10 +3,13 @@
 export const tuning = {
   /**
    * Difficulty is the fewest slides that solve the puzzle: `easiest` slides
-   * at level 0, `hardest` at level 100, evenly in between.
+   * at level 0, rising evenly to `hardest` at level `minedFrom`. Above that,
+   * puzzles come from the list of very hard ones in hard.ts, found ahead of
+   * time, and the slides needed rise on to the hardest in that list.
    */
   easiest: 3,
   hardest: 26,
+  minedFrom: 78,
 
   /** How many cars and lorries share the car park with the red car, fewest and most. */
   fewestCars: 9,

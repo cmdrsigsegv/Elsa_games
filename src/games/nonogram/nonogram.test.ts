@@ -72,7 +72,7 @@ describe('line solver', () => {
 });
 
 describe('generator', () => {
-  const targets = [6, 18, 35, 55, 73, 90];
+  const targets = [6, 18, 35, 52, 64, 76, 87, 96];
 
   it('gives the same puzzle for the same seed', () => {
     expect(generate(5, 40)).toEqual(generate(5, 40));
@@ -94,7 +94,7 @@ describe('generator', () => {
 
   it('makes bigger grids for higher levels', () => {
     const sizes = targets.map((target) => generate(target, target).w);
-    expect(sizes).toEqual([5, 10, 15, 20, 25, 30]);
+    expect(sizes).toEqual([5, 10, 15, 20, 25, 30, 35, 40]);
   });
 });
 

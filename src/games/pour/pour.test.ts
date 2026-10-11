@@ -87,7 +87,7 @@ describe('generator', () => {
 
   it('uses more colours at higher levels', () => {
     expect(coloursFor(0)).toBe(3);
-    expect(coloursFor(100)).toBe(12);
+    expect(coloursFor(100)).toBe(16);
     expect(coloursFor(60)).toBeGreaterThan(coloursFor(30));
   });
 });

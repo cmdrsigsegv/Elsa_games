@@ -216,8 +216,18 @@ button {
   white-space: nowrap;
 }
 
-.bar .level {
-  margin: 0 auto 0 0.6rem;
+.bar .titles {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  margin-right: auto;
+  line-height: 1.2;
+}
+
+.bar h1 {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .preparing {
@@ -251,11 +261,20 @@ button {
 }
 
 .pour .message,
+.tents .message,
+.bridges .message,
+.screws .message,
 .nonogram .message {
   flex: none;
 }
 
 .sudoku,
+.kakuro,
+.killer,
+.binairo,
+.tents,
+.bridges,
+.screws,
 .pour,
 .gridlock,
 .stack,

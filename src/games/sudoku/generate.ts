@@ -4,9 +4,9 @@
 // A puzzle that solver finishes needs no guessing and has one solution.
 
 import { random, type Random } from '../../kit/random';
-import { emptiesFor, score, tierFor } from './difficulty';
+import { BEYOND, emptiesFor, score, tierFor } from './difficulty';
 import { CELLS, COUNT, PEERS, bit } from './grid';
-import { begin, solve, type Work } from './solve';
+import { begin, countSolutions, solve, type Work } from './solve';
 import { tuning } from './tuning';
 
 export interface SudokuPuzzle {
@@ -48,6 +48,9 @@ function fullGrid(rng: Random): Uint8Array {
 
 function dig(solution: Uint8Array, rng: Random, maxTier: number, maxEmpties: number): Uint8Array {
   const givens = solution.slice();
+  // At the very top a puzzle only has to have one solution; below it, the
+  // solver must be able to finish it with the techniques the level allows.
+  const stillGood = () => (maxTier >= BEYOND ? countSolutions(givens) === 1 : solve(givens, maxTier).solved);
   let empties = 0;
   // With symmetry, cell i is removed together with its mirror image 80 - i.
   const order = rng.shuffle(Array.from({ length: tuning.symmetric ? 41 : CELLS }, (_, i) => i));
@@ -57,7 +60,7 @@ function dig(solution: Uint8Array, rng: Random, maxTier: number, maxEmpties: num
     if (empties + n > maxEmpties) continue;
     givens[i] = 0;
     givens[j] = 0;
-    if (solve(givens, maxTier).solved) {
+    if (stillGood()) {
       empties += n;
     } else {
       givens[i] = solution[i];
@@ -70,7 +73,7 @@ function dig(solution: Uint8Array, rng: Random, maxTier: number, maxEmpties: num
     for (const i of rng.shuffle(Array.from({ length: CELLS }, (_, k) => k))) {
       if (!givens[i]) continue;
       givens[i] = 0;
-      if (!solve(givens, maxTier).solved) givens[i] = solution[i];
+      if (!stillGood()) givens[i] = solution[i];
     }
   }
   return givens;

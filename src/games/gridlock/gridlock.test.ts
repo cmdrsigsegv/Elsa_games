@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { generate, slidesFor } from './generate';
+import { generate, parseCar, scoreFor, slidesFor } from './generate';
+import { HARD } from './hard';
 import { N, apply, cover, reach, solve, solved, start, status, type GridlockPuzzle } from './rules';
 
 // The red car on row 2 with one lorry standing across its way:
@@ -49,7 +50,7 @@ describe('rules', () => {
 });
 
 describe('generator', () => {
-  const targets = [5, 25, 45, 70, 95];
+  const targets = [5, 25, 45, 70];
 
   it('gives the same puzzle for the same seed', () => {
     expect(generate(3, 40)).toEqual(generate(3, 40));
@@ -75,9 +76,31 @@ describe('generator', () => {
     }
   });
 
+  it('the mined car parks are legal and need exactly the slides they say', () => {
+    expect(HARD.length).toBeGreaterThan(20);
+    // Solving every one would take minutes: check the easiest, the hardest, and a spread between.
+    const step = Math.max(1, Math.floor(HARD.length / 12));
+    const sample = HARD.filter((_, i) => i % step === 0 || i === HARD.length - 1);
+    for (const h of sample) {
+      const cars = h.cars.split(' ').map(parseCar);
+      expect(cars[0]).toEqual({ len: 2, horizontal: true, line: 2 });
+      expect([...cover(cars, h.start)].filter((i) => i >= 0).length).toBe(cars.reduce((n, car) => n + car.len, 0));
+      expect(solve(cars, h.start, 500_000)!.length).toBe(h.par);
+    }
+  });
+
+  it('the top levels use the mined car parks, hardest at the very top', () => {
+    const top = generate(1, 100);
+    expect(top.par).toBeGreaterThanOrEqual(HARD[HARD.length - 1].par - 1);
+    expect(generate(1, 85).par).toBeLessThan(top.par);
+    expect(generate(1, 85).par).toBeGreaterThan(slidesFor(78));
+    expect(generate(7, 95)).toEqual(generate(7, 95));
+    expect(scoreFor(slidesFor(90))).toBeGreaterThan(80);
+  });
+
   it('asks for more slides at higher levels', () => {
     const average = (target: number) => [1, 2, 3, 4].reduce((sum, seed) => sum + generate(seed * 7 + target, target).par, 0) / 4;
-    const pars = [5, 35, 65, 95].map(average);
+    const pars = [5, 30, 55, 77].map(average);
     for (let i = 1; i < pars.length; i++) expect(pars[i]).toBeGreaterThan(pars[i - 1]);
     expect(pars[0]).toBeLessThanOrEqual(slidesFor(5) + 1);
   });

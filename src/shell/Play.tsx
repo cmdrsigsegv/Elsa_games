@@ -139,11 +139,13 @@ export function Play({ game, place, onOpen, onExit }: Props) {
         <button type="button" class="ghost back" aria-label={t.play.back} onClick={onExit}>
           ‹
         </button>
-        <h1>{t.games[game.id]}</h1>
-        <span class="level">
-          {t.home.difficulty(place.difficulty)}
-          {!game.endless && ` · ${t.play.puzzle(place.index + 1)}`}
-        </span>
+        <div class="titles">
+          <h1>{t.games[game.id]}</h1>
+          <span class="level">
+            {t.home.difficulty(place.difficulty)}
+            {!game.endless && ` · ${t.play.puzzle(place.index + 1)}`}
+          </span>
+        </div>
         {session && !session.ended && settings().showTimer && <Clock read={elapsed} />}
         {game.options.length > 0 && (
           <button type="button" class="ghost" onClick={() => setChoosing(true)}>

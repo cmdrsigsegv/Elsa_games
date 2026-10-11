@@ -12,10 +12,16 @@ const en = {
   appName: "Elsa's Games",
   version: (v: string) => `Version ${v}`,
 
-  games: { sudoku: 'Sudoku', nonogram: 'Nonogram', stack: 'Blocks', gridlock: 'Gridlock', pour: 'Liquids' } as Record<string, string>,
+  games: { kakuro: 'Kakuro', killer: 'Killer Sudoku', binairo: 'Binairo', tents: 'Tents and Trees', bridges: 'Bridges', screws: 'Screws', sudoku: 'Sudoku', nonogram: 'Nonogram', stack: 'Blocks', gridlock: 'Gridlock', pour: 'Liquids' } as Record<string, string>,
 
   /** Words for each game's options: options.<game id>.<option key>. */
   options: {
+    killer: {
+      mistakes: {
+        label: 'Mark a wrong number in red',
+        choices: { obvious: 'Only when it clashes', always: 'Straight away' },
+      },
+    },
     sudoku: {
       mistakes: {
         label: 'Mark a wrong number in red',
@@ -169,9 +175,15 @@ const af: Strings = {
   appName: 'Elsa se Speletjies',
   version: (v) => `Weergawe ${v}`,
 
-  games: { sudoku: 'Sudoku', nonogram: 'Nonogram', stack: 'Blokke', gridlock: 'Verkeersknoop', pour: 'Vloeistowwe' },
+  games: { kakuro: 'Kakuro', killer: 'Killer Sudoku', binairo: 'Binairo', tents: 'Tente en Bome', bridges: 'Brûe', screws: 'Skroewe', sudoku: 'Sudoku', nonogram: 'Nonogram', stack: 'Blokke', gridlock: 'Verkeersknoop', pour: 'Vloeistowwe' },
 
   options: {
+    killer: {
+      mistakes: {
+        label: 'Merk ’n verkeerde nommer rooi',
+        choices: { obvious: 'Net as dit bots', always: 'Dadelik' },
+      },
+    },
     sudoku: {
       mistakes: {
         label: 'Merk ’n verkeerde nommer rooi',

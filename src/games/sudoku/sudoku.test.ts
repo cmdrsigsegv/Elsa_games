@@ -72,6 +72,20 @@ describe('generator', () => {
     }
   });
 
+  it('at the very top, makes puzzles with one solution that no technique here can finish', () => {
+    let beyond = 0;
+    for (let seed = 1; seed <= 4; seed++) {
+      const p = generate(seed * 31, 98);
+      expect(countSolutions(p.givens)).toBe(1);
+      p.givens.forEach((d, i) => expect(d === 0 || d === p.solution[i]).toBe(true));
+      if (!solve(p.givens).solved) {
+        beyond++;
+        expect(p.score).toBe(100);
+      }
+    }
+    expect(beyond).toBeGreaterThanOrEqual(3);
+  });
+
   it('makes harder puzzles for higher levels', () => {
     const avg = (target: number) =>
       [1, 2, 3].reduce((sum, seed) => sum + generate(seed * 77 + target, target).score, 0) / 3;
