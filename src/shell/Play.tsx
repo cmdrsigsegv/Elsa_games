@@ -19,6 +19,8 @@ import {
   type Session,
 } from '../kit/session';
 import { settings } from '../kit/settings';
+import { load, save } from '../storage/kv';
+import { rules } from './rules';
 import { recordPlayed } from '../kit/stats';
 import { makePuzzle } from '../kit/supply';
 import { t } from './strings';
@@ -52,6 +54,8 @@ export function Play({ game, place, onOpen, onExit }: Props) {
   const [asking, setAsking] = useState(false);
   const [options, setOptions] = useState<Record<string, string>>({});
   const [choosing, setChoosing] = useState(false);
+  const [reading, setReading] = useState(false);
+  const how = rules[game.id]?.[settings().language];
   // Once the puzzle has ended: where to go next (null when the set is finished).
   const [after, setAfter] = useState<{ next: Place | null } | null>(null);
 
@@ -67,6 +71,12 @@ export function Play({ game, place, onOpen, onExit }: Props) {
     let alive = true;
     void (async () => {
       const op = await loadOptions(game);
+      // The first time a game is opened, its rules come up by themselves.
+      const seen = await load<boolean>(`rules-seen:${game.id}`);
+      if (!seen && alive) {
+        setReading(true);
+        void save(`rules-seen:${game.id}`, true);
+      }
       // A puzzle left finished is started afresh when it is opened again.
       const saved = await loadSession(key);
       const se = saved && !saved.ended ? saved : await fresh();
@@ -147,6 +157,11 @@ export function Play({ game, place, onOpen, onExit }: Props) {
           </span>
         </div>
         {session && !session.ended && settings().showTimer && <Clock read={elapsed} />}
+        {how && (
+          <button type="button" class="ghost help" aria-label={t.play.rules} onClick={() => setReading(true)}>
+            ?
+          </button>
+        )}
         {game.options.length > 0 && (
           <button type="button" class="ghost" onClick={() => setChoosing(true)}>
             {t.play.options}
@@ -204,6 +219,31 @@ export function Play({ game, place, onOpen, onExit }: Props) {
             <span />
             <button type="button" class="ghost" onClick={onExit}>
               {game.endless ? t.play.back : t.play.allPuzzles}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {reading && how && (
+        <div class="sheet rules" role="dialog" aria-label={t.play.rules}>
+          <h2>{t.games[game.id]}</h2>
+          <h3>{t.play.goal}</h3>
+          <p>{how.goal}</p>
+          <h3>{t.play.theRules}</h3>
+          <ul>
+            {how.rules.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+          <h3>{t.play.onScreen}</h3>
+          <ul>
+            {how.how.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+          <div class="ratings stacked">
+            <button type="button" onClick={() => setReading(false)}>
+              {t.play.gotIt}
             </button>
           </div>
         </div>

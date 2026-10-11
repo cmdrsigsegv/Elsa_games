@@ -6,7 +6,6 @@ import { gridlock } from './gridlock';
 import { nonogram } from './nonogram';
 import { pour } from './pour';
 import { stack } from './stack';
-import { screws } from './screws';
 import { bridges } from './bridges';
 import { tents } from './tents';
 import { binairo } from './binairo';
@@ -14,4 +13,5 @@ import { killer } from './killer';
 import { kakuro } from './kakuro';
 import { sudoku } from './sudoku';
 
-export const games: Game[] = [sudoku, nonogram, gridlock, pour, stack, screws, bridges, tents, binairo, killer, kakuro];
+// The screw game (./screws) is built and tested but benched: it is left off this list on purpose.
+export const games: Game[] = [sudoku, nonogram, gridlock, pour, stack, bridges, tents, binairo, killer, kakuro];

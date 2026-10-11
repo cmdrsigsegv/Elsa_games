@@ -86,7 +86,13 @@ export function View({ puzzle, state, ended, play, undo, canUndo, countHint, opt
 
   const left = (digit: number) => 9 - state.values.filter((d) => d === digit).length;
 
-  let message = <>{' '}</>;
+  // With nothing else to say, the line reads out the selected cell's cage: its total, and what is still to place.
+  const cage = selected !== null ? puzzle.cages.find((c) => c.cells.includes(selected)) : undefined;
+  const placed = cage ? cage.cells.filter((i) => state.values[i]) : [];
+  const cageLine = cage
+    ? pick(words).cage(cage.sum, cage.cells.length, cage.sum - placed.reduce((sum, i) => sum + state.values[i], 0), cage.cells.length - placed.length)
+    : '\u00a0';
+  let message = <>{cageLine}</>;
   if (hinting) {
     message = <>{`${reason(hinting.why)} ${hinting.why.kind === 'wrong' ? t.sudoku.hintFix : t.sudoku.hintAgain}`}</>;
   } else if (showSlips) {

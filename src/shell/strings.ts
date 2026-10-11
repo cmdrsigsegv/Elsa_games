@@ -50,6 +50,11 @@ const en = {
   play: {
     back: 'Back',
     restart: 'Restart',
+    rules: 'How to play',
+    goal: 'The goal',
+    theRules: 'The rules',
+    onScreen: 'On the screen',
+    gotIt: 'Got it',
     puzzle: (n: number) => `Puzzle ${n}`,
     options: 'Options',
     done: 'Done',
@@ -212,6 +217,11 @@ const af: Strings = {
   play: {
     back: 'Terug',
     restart: 'Begin oor',
+    rules: 'Hoe om te speel',
+    goal: 'Die doel',
+    theRules: 'Die reëls',
+    onScreen: 'Op die skerm',
+    gotIt: 'Reg so',
     puzzle: (n) => `Raaisel ${n}`,
     options: 'Opsies',
     done: 'Klaar',

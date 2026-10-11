@@ -445,6 +445,56 @@ button {
   margin-top: 1rem;
 }
 
+/* The rules: long enough to need scrolling, and read as text rather than as a notice. */
+.sheet.rules {
+  max-height: 88%;
+  overflow-y: auto;
+  text-align: left;
+  z-index: 2;
+}
+
+.sheet.rules h2 {
+  text-align: center;
+}
+
+.sheet.rules h3 {
+  margin: 1rem 0 0.3rem;
+  font-size: 0.85rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-quiet);
+}
+
+.sheet.rules p,
+.sheet.rules li {
+  margin: 0 0 0.45rem;
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
+.sheet.rules ul {
+  margin: 0 0 0.5rem;
+  padding-left: 1.2rem;
+}
+
+.bar .ghost:not(.back) {
+  padding: 0 0.45rem;
+  font-size: 0.95rem;
+  flex: none;
+}
+
+.bar .ghost.help {
+  width: 2.1rem;
+  height: 2.1rem;
+  min-height: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  font-size: 1.05rem;
+  margin-right: 0.15rem;
+}
+
 .sheet-foot {
   display: flex;
   justify-content: space-between;
