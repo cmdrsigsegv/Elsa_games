@@ -5,6 +5,7 @@ import type { PuzzleBase } from '../kit/game';
 import { generate as arrows } from './arrows/generate';
 import { generate as gridlock } from './gridlock/generate';
 import { generate as nonogram } from './nonogram/generate';
+import { generate as pour } from './pour/generate';
 import { generate as stack } from './stack/rules';
 import { generate as sudoku } from './sudoku/generate';
 
@@ -13,5 +14,6 @@ export const generators: Record<string, (seed: number, target: number) => Puzzle
   nonogram,
   arrows,
   stack,
+  pour,
   gridlock,
 };

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { random } from '../../kit/random';
-import { H, W, apply, cover, deal, fall, fullRows, reach, settle, start, status, type Block, type StackPuzzle, type StackState } from './rules';
+import { H, W, apply, cover, deal, fall, fullRows, play, reach, settle, start, status, type Block, type Frame, type StackPuzzle, type StackState } from './rules';
 
 const p: StackPuzzle = { seed: 1, score: 40 };
 let ids = 0;
@@ -44,14 +44,25 @@ describe('the well', () => {
     expect(after.points).toBe(10);
   });
 
-  it('pays more for each row of a chain reaction', () => {
-    // Clearing the bottom row lets the block above fall and complete the next one.
-    const bottom = [block(9, 0, 4), block(9, 4, 4)];
-    const second = [block(8, 0, 4), block(8, 4, 2)];
-    const plug = block(6, 6, 2); // sits on nothing yet: it falls into the gap in the second row
-    const after = settle([...bottom, ...second, plug]);
+  it('pays double for two rows cleared together', () => {
+    const after = settle([block(9, 0, 4), block(9, 4, 4), block(8, 0, 4), block(8, 4, 4)]);
+    expect(after.blocks).toEqual([]);
+    expect(after.points).toBe(20);
+  });
+
+  it('pays more for each link of a chain reaction, and reports every step', () => {
+    // The second row from the bottom is full; the bottom row has a gap, and a block sits above it.
+    // Clearing the full row lets that block fall into the gap and complete the bottom row.
+    const frames: Frame[] = [];
+    const plug = block(7, 6, 2);
+    const after = settle([block(9, 0, 6), block(8, 0, 4), block(8, 4, 4), plug], frames);
     expect(after.blocks).toEqual([]);
     expect(after.points).toBe(10 + 20);
+    expect(frames.map((f) => (f.kind === 'clear' ? `clear ${f.rows} x${f.chain} +${f.gained}` : 'move'))).toEqual([
+      'clear 8 x1 +10',
+      'move',
+      'clear 9 x2 +20',
+    ]);
   });
 });
 
@@ -85,6 +96,16 @@ describe('a round', () => {
     expect(s1.points).toBe(10);
     expect(s1.blocks.length).toBe(1); // only the dropped block is left
     expect(s1.blocks[0]).toMatchObject({ row: 9, col: 0, len: 2 });
+  });
+
+  it('reports the drop as a step, and a row it completes as the next link in the chain', () => {
+    // Her slide completes the bottom row; the drop then completes the row that is left.
+    const single = block(8, 5, 1);
+    const s0 = state([block(9, 0, 4), block(9, 5, 3), single, block(8, 0, 4)], { coming: [{ col: 4, len: 4, colour: 0 }] });
+    const { state: s1, frames } = play(p, s0, { block: single.id, to: 4 });
+    expect(s1.points).toBe(10 + 20);
+    expect(frames.filter((f) => f.kind === 'clear').map((f) => f.kind === 'clear' && f.chain)).toEqual([1, 2]);
+    expect(play(p, s1, { block: 99999, to: 0 }).frames).toEqual([]);
   });
 
   it('letting the round go by still brings the drop', () => {
@@ -126,20 +147,17 @@ describe('dealing', () => {
     }
   });
 
-  it('brings blocks faster at high levels: a player who never moves lasts fewer rounds', () => {
-    const rounds = (level: number) => {
-      let total = 0;
-      for (let seed = 1; seed <= 30; seed++) {
-        const q: StackPuzzle = { seed, score: level };
-        let s = start(q);
-        while (!s.over && s.rounds < 500) s = apply(q, s, { pass: true });
-        total += s.rounds;
-      }
-      return total / 30;
+  it('brings more, and longer, blocks at high levels', () => {
+    const perRound = (level: number) => {
+      let cells = 0;
+      for (let seed = 1; seed <= 400; seed++) for (const c of deal(random(seed), level)) cells += c.len;
+      return cells / 400;
     };
-    const [slow, middle, fast] = [10, 50, 90].map(rounds);
-    console.log('rounds survived without moving, at levels 10 / 50 / 90:', Math.round(slow), Math.round(middle), Math.round(fast));
-    expect(slow).toBeGreaterThan(middle);
-    expect(middle).toBeGreaterThan(fast);
+    const [slow, middle, fast] = [5, 50, 95].map(perRound);
+    console.log('cells dropped a round, at levels 5 / 50 / 95:', slow.toFixed(1), middle.toFixed(1), fast.toFixed(1));
+    expect(middle).toBeGreaterThan(slow * 1.3);
+    expect(fast).toBeGreaterThan(middle * 1.1);
+    // Never a full row in one drop: there is always somewhere to slide.
+    expect(fast).toBeLessThan(W);
   });
 });

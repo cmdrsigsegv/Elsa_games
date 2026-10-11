@@ -2,12 +2,11 @@
 // through this, so adding a game never means changing them.
 
 import type { ComponentType } from 'preact';
-import type { AdaptiveTuning } from './adaptive';
 
 /** What every puzzle carries, whatever the game. */
 export interface PuzzleBase {
   seed: number;
-  /** Difficulty on the game's own 0 to 100 scale. */
+  /** How hard it is, 0 to 100: what the generator was asked for, or what it measured. */
   score: number;
 }
 
@@ -29,7 +28,7 @@ export interface ViewProps<P, S, M> {
   play(move: M): void;
   undo(): void;
   canUndo: boolean;
-  /** Tells the kit a hint was used; hints feed the adaptive difficulty. */
+  /** Tells the kit a hint was used; hints are counted in the statistics. */
   countHint(): void;
   /** Her current choice for each of the game's options, by key. */
   options: Record<string, string>;
@@ -39,7 +38,8 @@ export interface ViewProps<P, S, M> {
 export interface Game<P extends PuzzleBase = any, S = any, M = any> {
   /** Also the key for its name in strings.ts and its generator in generators.ts. */
   id: string;
-  adaptive: AdaptiveTuning;
+  /** A game with no puzzles to finish, only a score to beat: it has difficulties but no sets. */
+  endless?: boolean;
   options: OptionDef[];
 
   // Rules: pure functions, no drawing.
@@ -55,12 +55,6 @@ export interface Game<P extends PuzzleBase = any, S = any, M = any> {
    * "Game over" and shows this line in place of the time taken.
    */
   endSummary?(puzzle: P, state: S): string;
-  /**
-   * What the adaptive difficulty compares from game to game in place of the
-   * time taken. Lower means it went better than usual.
-   */
-  effort?(puzzle: P, state: S): number;
-
   /** The board and its controls. */
   View: ComponentType<ViewProps<P, S, M>>;
 }

@@ -6,7 +6,6 @@ import { View } from './View';
 
 export const nonogram: Game<NonogramPuzzle, NonogramState, NonogramMove> = {
   id: 'nonogram',
-  adaptive: tuning.adaptive,
   options: [{ key: 'mistakes', choices: ['never', 'always'], initial: tuning.mistakes }],
   start,
   apply,

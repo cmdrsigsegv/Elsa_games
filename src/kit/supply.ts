@@ -18,12 +18,10 @@ function theWorker(): Worker {
   return worker;
 }
 
-export const newSeed = () => (Math.random() * 0x100000000) >>> 0;
-
-/** Requests are answered in the order they were made. */
-export function makePuzzle<P extends PuzzleBase>(game: string, target: number): Promise<P> {
+/** Makes the puzzle for a seed and a level. Requests are answered in the order they were made. */
+export function makePuzzle<P extends PuzzleBase>(game: string, seed: number, target: number): Promise<P> {
   return new Promise((resolve) => {
-    const request: GenerateRequest = { id: ++lastId, game, seed: newSeed(), target };
+    const request: GenerateRequest = { id: ++lastId, game, seed, target };
     waiting.set(request.id, resolve as (puzzle: PuzzleBase) => void);
     theWorker().postMessage(request);
   });

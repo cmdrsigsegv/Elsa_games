@@ -1,67 +1,95 @@
-// The arrow puzzle's screen: the board, and Undo and Hint. Tapping an arrow
-// sends it on its way.
+// The arrow puzzle's screen: the knot, and Undo and Hint. Tapping an arrow
+// sends it forward until something stops it, or off the board.
 
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { Board } from '../../kit/Board';
 import type { ViewProps } from '../../kit/game';
 import { t } from '../../shell/strings';
 import { cellAt, draw, layout } from './draw';
-import { head, hint, owners, ray, type ArrowsMove, type ArrowsPuzzle, type ArrowsState } from './rules';
-import { tuning } from './tuning';
+import { movable, owners, slide, solve, track, type ArrowsMove, type ArrowsPuzzle, type ArrowsState } from './rules';
 
 type Props = ViewProps<ArrowsPuzzle, ArrowsState, ArrowsMove>;
 
-/** How fast an arrow slides off, in cells a second, and how long a bump stays red. */
-const SPEED = 38;
+/** How fast an arrow slides, in cells a second, and how long a bump stays red. */
+const SPEED = 30;
 const BUMP_MS = 450;
 
+/** An arrow on the move: from where to where along its road, and when it set off. */
+interface Motion {
+  from: number;
+  to: number;
+  began: number;
+}
+
 export function View({ puzzle, state, ended, play, undo, canUndo, countHint }: Props) {
-  // Arrows on their way out (when each set off) and the last bump (when it happened).
-  const leaving = useRef(new Map<number, number>());
+  const moving = useRef(new Map<number, Motion>());
   const bump = useRef<{ arrow: number; into: number; at: number } | null>(null);
   const seen = useRef(state);
   const [, frame] = useState(0);
-  const [hinted, setHinted] = useState<number | null>(null);
+  // A hint is for one position: the arrow to tap, or null if the knot can no longer be undone.
+  const [hinted, setHinted] = useState<{ arrow: number | null; at: ArrowsState } | null>(null);
   const down = useRef<number | null>(null);
 
-  // Compare with the state last drawn to see what just happened.
+  // Compare with the state last drawn to see what just moved.
   if (seen.current !== state) {
     const now = performance.now();
-    state.gone.forEach((gone, i) => {
-      if (gone && !seen.current.gone[i]) leaving.current.set(i, now);
-      if (!gone) leaving.current.delete(i); // an undo brings it straight back
+    puzzle.arrows.forEach((a, i) => {
+      const was = seen.current.slid[i];
+      // An arrow that leaves slides on past the end of its road; one that is undone snaps back.
+      const to = state.gone[i] ? track(puzzle, a).length + 1 : state.slid[i];
+      if (state.moves > seen.current.moves && (to !== was || state.gone[i] !== seen.current.gone[i])) {
+        moving.current.set(i, { from: was, to, began: now });
+      } else if (state.moves < seen.current.moves) {
+        moving.current.delete(i);
+      }
     });
-    if (state.bumps > seen.current.bumps && state.lastBump) bump.current = { ...state.lastBump, at: now };
     seen.current = state;
   }
 
-  // How far each leaving arrow has slid; ones that are clear of the board are dropped.
+  // Where each arrow is drawn: at rest, or part-way through its slide.
   const now = performance.now();
-  const moved = new Map<number, number>();
-  for (const [i, since] of leaving.current) {
-    const a = puzzle.arrows[i];
-    const cells = ((now - since) / 1000) * SPEED;
-    if (cells > ray(puzzle.w, puzzle.h, head(a), a.dir).length + a.cells.length + 1) leaving.current.delete(i);
-    else moved.set(i, cells);
-  }
+  const at = puzzle.arrows.map((_, i) => {
+    const m = moving.current.get(i);
+    if (m) {
+      const pos = m.from + ((now - m.began) / 1000) * SPEED;
+      if (pos < m.to) return pos;
+      moving.current.delete(i);
+    }
+    return state.gone[i] ? null : state.slid[i];
+  });
   if (bump.current && now - bump.current.at > BUMP_MS) bump.current = null;
-  const moving = moved.size > 0 || bump.current !== null;
+  const busy = moving.current.size > 0 || bump.current !== null;
 
   useEffect(() => {
-    if (!moving) return;
+    if (!busy) return;
     const id = requestAnimationFrame(() => frame((n) => n + 1));
     return () => cancelAnimationFrame(id);
   });
 
-  const lit = new Set(hinted !== null && !state.gone[hinted] ? [hinted] : []);
+  const hint = hinted && hinted.at === state ? hinted : null;
+  const lit = new Set(hint && hint.arrow !== null ? [hint.arrow] : []);
   const red = new Set(bump.current ? [bump.current.arrow, bump.current.into] : []);
+  const stuck = !ended && movable(puzzle, state).length === 0;
 
   const arrowAt = (x: number, y: number, w: number, h: number): number | null => {
     const cell = cellAt(puzzle, layout(puzzle, w, h), x, y);
     if (cell === null) return null;
-    const owner = owners(puzzle, state.gone)[cell];
+    const owner = owners(puzzle, state)[cell];
     return owner >= 0 ? owner : null;
   };
+
+  const tap = (arrow: number) => {
+    const result = slide(puzzle, state, arrow);
+    // An arrow with another right in front of it cannot move at all: show which.
+    if (!result.leaves && result.by === 0) bump.current = { arrow, into: result.into, at: performance.now() };
+    else play({ arrow });
+    frame((n) => n + 1);
+  };
+
+  let message = t.arrows.left(state.gone.filter((g) => !g).length);
+  if (bump.current) message = t.arrows.blocked;
+  else if (hint) message = hint.arrow === null ? t.arrows.lost : t.arrows.hinted;
+  else if (stuck) message = t.arrows.stuck;
 
   return (
     <div class="arrows">
@@ -74,23 +102,16 @@ export function View({ puzzle, state, ended, play, undo, canUndo, countHint }: P
             if (ended) return;
             if (phase === 'start') down.current = arrowAt(x, y, w, h);
             else if (phase === 'end') {
-              if (down.current !== null && arrowAt(x, y, w, h) === down.current) {
-                setHinted(null);
-                play({ arrow: down.current });
-              }
+              if (down.current !== null && arrowAt(x, y, w, h) === down.current) tap(down.current);
               down.current = null;
             } else if (phase === 'cancel') down.current = null;
           }}
-          draw={(ctx, w, h, theme) => draw(ctx, w, h, theme, puzzle, { present: state.gone.map((g) => !g), leaving: moved, lit, red })}
+          draw={(ctx, w, h, theme) => draw(ctx, w, h, theme, puzzle, { at, lit, red })}
         />
       </div>
 
       <p class="message" aria-live="polite">
-        <span class="lives" aria-label={t.arrows.lives(tuning.lives - state.bumps)}>
-          {'♥'.repeat(Math.max(0, tuning.lives - state.bumps))}
-          {'♡'.repeat(Math.min(tuning.lives, state.bumps))}
-        </span>{' '}
-        {bump.current ? t.arrows.blocked : hinted !== null && !state.gone[hinted] ? t.arrows.hinted : t.arrows.left(state.gone.filter((g) => !g).length)}
+        {message}
       </p>
 
       <div class="tools two">
@@ -101,10 +122,8 @@ export function View({ puzzle, state, ended, play, undo, canUndo, countHint }: P
           type="button"
           disabled={ended}
           onClick={() => {
-            const h = hint(puzzle, state);
-            if (!h) return;
             countHint();
-            setHinted(h.arrow);
+            setHinted({ arrow: solve(puzzle, state).way?.[0] ?? null, at: state });
           }}
         >
           {t.arrows.hint}

@@ -10,7 +10,8 @@ export interface Layout {
 }
 
 export function layout(p: ArrowsPuzzle, w: number, h: number): Layout {
-  const cell = Math.min(w / p.w, h / p.h);
+  // Room is left round the knot, so an arrow is seen to leave it.
+  const cell = Math.min(w / (p.w + 2), h / (p.h + 2));
   return { cell, x0: (w - p.w * cell) / 2, y0: (h - p.h * cell) / 2 };
 }
 
@@ -21,10 +22,8 @@ export function cellAt(p: ArrowsPuzzle, l: Layout, x: number, y: number): number
 }
 
 export interface Look {
-  /** Arrows still on the board. */
-  present: boolean[];
-  /** Arrows sliding off: how far each has gone, in cells. */
-  leaving: Map<number, number>;
+  /** For each arrow, how far along its road it is, in cells and fractions of one; null if it is not on show. */
+  at: (number | null)[];
   /** Arrows to paint in the accent colour (a hint) or red (a bump). */
   lit: Set<number>;
   red: Set<number>;
@@ -77,7 +76,7 @@ export function draw(ctx: CanvasRenderingContext2D, w: number, h: number, theme:
 
     ctx.strokeStyle = colour;
     ctx.fillStyle = colour;
-    ctx.lineWidth = Math.max(2, cell * 0.2);
+    ctx.lineWidth = Math.max(2, cell * 0.22);
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.beginPath();
@@ -98,8 +97,8 @@ export function draw(ctx: CanvasRenderingContext2D, w: number, h: number, theme:
   };
 
   p.arrows.forEach((a, i) => {
-    const moved = look.leaving.get(i);
-    if (!look.present[i] && moved === undefined) return;
-    paint(a, look.red.has(i) ? theme.wrong : look.lit.has(i) ? theme.accent : theme.ink, moved ?? 0);
+    const moved = look.at[i];
+    if (moved === null) return;
+    paint(a, look.red.has(i) ? theme.wrong : look.lit.has(i) ? theme.accent : theme.ink, moved);
   });
 }

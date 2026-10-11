@@ -1,32 +1,27 @@
 // The screen around a game in progress. It is the same for every game: it
-// loads and saves the session, keeps the clock, asks how the puzzle was, moves
-// the difficulty level, and lines up the next puzzle.
+// makes or reloads the puzzle for a place, saves after every move, keeps the
+// clock, and records the result when the puzzle ends.
 
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { nextTarget, update, type Rating, type Skill } from '../kit/adaptive';
-import type { Game, PuzzleBase } from '../kit/game';
-import { random } from '../kit/random';
+import type { Game } from '../kit/game';
+import { levelFor, loadProgress, nextUnsolved, placeKey, saveProgress, seedFor, setDone, withSolved, type Place } from '../kit/progress';
 import {
   clearSession,
   current,
   loadOptions,
   loadSession,
-  loadSkill,
   newSession,
   play,
   saveOptions,
   saveSession,
-  saveSkill,
   started,
   undo,
   type Session,
 } from '../kit/session';
 import { settings } from '../kit/settings';
 import { recordPlayed } from '../kit/stats';
-import { makePuzzle, newSeed } from '../kit/supply';
+import { makePuzzle } from '../kit/supply';
 import { t } from './strings';
-
-const RATINGS: Rating[] = ['easy', 'right', 'hard'];
 
 export function clockText(ms: number): string {
   const s = Math.floor(ms / 1000);
@@ -42,129 +37,100 @@ function Clock({ read }: { read(): number }) {
   return <span class="clock">{clockText(read())}</span>;
 }
 
-export function Play({ game, onExit }: { game: Game; onExit(): void }) {
+interface Props {
+  game: Game;
+  place: Place;
+  /** Go to another puzzle of the set. */
+  onOpen(place: Place): void;
+  /** Back to the picker. */
+  onExit(): void;
+}
+
+export function Play({ game, place, onOpen, onExit }: Props) {
+  const key = placeKey(game.id, place);
   const [session, setSession] = useState<Session | null>(null);
-  const [skill, setSkill] = useState<Skill | null>(null);
   const [asking, setAsking] = useState(false);
   const [options, setOptions] = useState<Record<string, string>>({});
   const [choosing, setChoosing] = useState(false);
+  // Once the puzzle has ended: where to go next (null when the set is finished).
+  const [after, setAfter] = useState<{ next: Place | null } | null>(null);
 
   // Time played so far: `base`, plus the stretch since `since` while running.
-  const clock = useRef<{ seed: number | null; base: number; since: number | null }>({ seed: null, base: 0, since: null });
+  const clock = useRef<{ base: number; since: number | null }>({ base: 0, since: null });
   const elapsed = () => clock.current.base + (clock.current.since === null ? 0 : performance.now() - clock.current.since);
 
-  // While she plays, the next puzzle is made in the background for each way
-  // she might rate this one, so "next" is instant whatever she answers.
-  const prepared = useRef<{ seed: number; puzzles: Record<Rating, Promise<PuzzleBase>> } | null>(null);
-
-  const seed = session?.puzzle.seed;
   const ended = session?.ended ?? false;
+
+  const fresh = async () => newSession(game, await makePuzzle(game.id, seedFor(game.id, place), levelFor(place)));
 
   useEffect(() => {
     let alive = true;
     void (async () => {
-      const sk = await loadSkill(game.id, game.adaptive);
-      const saved = await loadSession(game.id);
-      const se = saved ?? newSession(game, await makePuzzle(game.id, nextTarget(sk, random(newSeed()), game.adaptive)));
       const op = await loadOptions(game);
+      // A puzzle left finished is started afresh when it is opened again.
+      const saved = await loadSession(key);
+      const se = saved && !saved.ended ? saved : await fresh();
       if (!alive) return;
+      clock.current = { base: se.elapsedMs, since: null };
       setOptions(op);
-      setSkill(sk);
       setSession(se);
     })();
     return () => {
       alive = false;
     };
-  }, [game]);
+  }, [key]);
 
   // The clock runs while an unfinished puzzle is on screen.
   useEffect(() => {
     if (!session) return;
-    // A new puzzle starts from its saved time; finishing one only stops the clock.
-    if (clock.current.seed !== session.puzzle.seed) {
-      clock.current = { seed: session.puzzle.seed, base: session.elapsedMs, since: null };
-    }
     const sync = () => {
       const c = clock.current;
       const run = !ended && document.visibilityState === 'visible';
       if (run && c.since === null) c.since = performance.now();
-      if (!run && c.since !== null) clock.current = { ...c, base: elapsed(), since: null };
-      if (!run) void saveSession(game.id, { ...session, elapsedMs: elapsed() });
+      if (!run && c.since !== null) clock.current = { base: elapsed(), since: null };
+      if (!run && !ended) void saveSession(key, { ...session, elapsedMs: elapsed() });
     };
     sync();
     document.addEventListener('visibilitychange', sync);
     return () => {
       document.removeEventListener('visibilitychange', sync);
-      clock.current = { ...clock.current, base: elapsed(), since: null };
+      clock.current = { base: elapsed(), since: null };
     };
-    // Restarted per puzzle, not per move: `session` is only read for saving.
-  }, [seed, ended]);
+  }, [session === null, ended]);
 
   useEffect(() => {
-    if (session) void saveSession(game.id, { ...session, elapsedMs: elapsed() });
+    if (session && !session.ended) void saveSession(key, { ...session, elapsedMs: elapsed() });
   }, [session]);
 
+  // When it ends: record it, mark it solved, forget the saved game, and work out what comes next.
   useEffect(() => {
-    if (!session || !skill || prepared.current?.seed === session.puzzle.seed) return;
-    const rng = random(newSeed());
-    const puzzleFor = (rating: Rating) => {
-      const guess = update(
-        skill,
-        { score: session.puzzle.score, rating, timeMs: 0, hints: 0, mistakes: 0, abandoned: false },
-        game.adaptive,
-      );
-      return makePuzzle(game.id, nextTarget(guess, rng, game.adaptive));
-    };
-    // "Just right" first: it is also what an unrated puzzle uses.
-    const right = puzzleFor('right');
-    prepared.current = { seed: session.puzzle.seed, puzzles: { right, easy: puzzleFor('easy'), hard: puzzleFor('hard') } };
-  }, [session, skill]);
-
-  const next = async (rating: Rating | null, abandoned: boolean) => {
-    if (!session || !skill) return;
-    let after = skill;
-    // Running out of lives counts like giving up; a game that always ends in defeat is judged by its score instead.
-    const gaveUp = abandoned || (session.lost === true && !game.effort);
-    if (!abandoned || started(session)) {
-      after = update(
-        skill,
-        {
-          score: session.puzzle.score,
-          rating,
-          timeMs: game.effort ? game.effort(session.puzzle, current(session)) : elapsed(),
-          hints: session.hints,
-          mistakes: session.mistakes,
-          abandoned: gaveUp,
-        },
-        game.adaptive,
-      );
-      setSkill(after);
-      void saveSkill(game.id, after);
-      void recordPlayed(game.id, {
+    if (!session?.ended || after) return;
+    void (async () => {
+      await clearSession(key);
+      await recordPlayed(game.id, {
         at: Date.now(),
-        score: session.puzzle.score,
+        difficulty: place.difficulty,
         timeMs: elapsed(),
         hints: session.hints,
         mistakes: session.mistakes,
-        rating,
-        abandoned,
-        level: after.level,
+        lost: session.lost === true,
       });
-    }
-    const ready =
-      prepared.current?.seed === session.puzzle.seed
-        ? prepared.current.puzzles[rating ?? 'right']
-        : makePuzzle(game.id, nextTarget(after, random(newSeed()), game.adaptive));
-    setAsking(false);
-    setSession(null);
-    await clearSession(game.id);
-    setSession(newSession(game, await ready));
-  };
+      let progress = await loadProgress(game.id);
+      if (!session.lost && !game.endless) {
+        progress = withSolved(progress, place);
+        await saveProgress(game.id, progress);
+      }
+      setAfter({ next: game.endless || setDone(progress, place.difficulty) ? null : nextUnsolved(progress, place) });
+    })();
+  }, [session?.ended]);
 
-  const askNew = () => {
-    if (!session) return;
-    if (session.ended || !started(session)) void next(null, !session.ended);
-    else setAsking(true);
+  const restart = async () => {
+    setAsking(false);
+    setAfter(null);
+    setSession(null);
+    await clearSession(key);
+    clock.current = { base: 0, since: null };
+    setSession(await fresh());
   };
 
   return (
@@ -174,15 +140,23 @@ export function Play({ game, onExit }: { game: Game; onExit(): void }) {
           ‹
         </button>
         <h1>{t.games[game.id]}</h1>
-        {session && <span class="level">{t.home.level(Math.round(session.puzzle.score))}</span>}
+        <span class="level">
+          {t.home.difficulty(place.difficulty)}
+          {!game.endless && ` · ${t.play.puzzle(place.index + 1)}`}
+        </span>
         {session && !session.ended && settings().showTimer && <Clock read={elapsed} />}
         {game.options.length > 0 && (
           <button type="button" class="ghost" onClick={() => setChoosing(true)}>
             {t.play.options}
           </button>
         )}
-        <button type="button" class="ghost" disabled={!session} onClick={askNew}>
-          {t.play.newPuzzle}
+        <button
+          type="button"
+          class="ghost"
+          disabled={!session}
+          onClick={() => (session && started(session) && !session.ended ? setAsking(true) : void restart())}
+        >
+          {t.play.restart}
         </button>
       </header>
 
@@ -202,27 +176,32 @@ export function Play({ game, onExit }: { game: Game; onExit(): void }) {
         <p class="preparing">{t.play.preparing}</p>
       )}
 
-      {session?.ended && (
+      {session?.ended && after && (
         <div class="sheet" role="dialog" aria-label={session.lost ? t.play.gameOver : t.play.solved}>
           <h2>{session.lost ? t.play.gameOver : t.play.solved}</h2>
           <p class="summary">
             {game.endSummary?.(session.puzzle, current(session)) ?? clockText(elapsed())}
             {session.hints > 0 && ` · ${t.play.hints(session.hints)}`}
           </p>
-          <p>{t.play.howWasIt}</p>
-          <div class="ratings">
-            {RATINGS.map((r) => (
-              <button type="button" key={r} onClick={() => void next(r, false)}>
-                {r === 'easy' ? t.play.tooEasy : r === 'right' ? t.play.justRight : t.play.tooHard}
+          <div class="ratings stacked">
+            {session.lost || game.endless ? (
+              <button type="button" onClick={() => void restart()}>
+                {t.play.again}
               </button>
-            ))}
+            ) : after.next ? (
+              <button type="button" onClick={() => onOpen(after.next!)}>
+                {t.play.next}
+              </button>
+            ) : (
+              <button type="button" onClick={onExit}>
+                {t.play.nextSet}
+              </button>
+            )}
           </div>
           <div class="sheet-foot">
+            <span />
             <button type="button" class="ghost" onClick={onExit}>
-              {t.play.home}
-            </button>
-            <button type="button" class="ghost" onClick={() => void next(null, false)}>
-              {t.play.skip}
+              {game.endless ? t.play.back : t.play.allPuzzles}
             </button>
           </div>
         </div>
@@ -263,15 +242,14 @@ export function Play({ game, onExit }: { game: Game; onExit(): void }) {
       )}
 
       {asking && session && !session.ended && (
-        <div class="sheet" role="dialog" aria-label={t.play.abandonTitle}>
-          <h2>{t.play.abandonTitle}</h2>
-          <p>{t.play.abandonBody}</p>
+        <div class="sheet" role="dialog" aria-label={t.play.restartTitle}>
+          <h2>{t.play.restartTitle}</h2>
           <div class="ratings">
             <button type="button" onClick={() => setAsking(false)}>
-              {t.play.abandonNo}
+              {t.play.restartNo}
             </button>
-            <button type="button" onClick={() => void next(null, true)}>
-              {t.play.abandonYes}
+            <button type="button" onClick={() => void restart()}>
+              {t.play.restartYes}
             </button>
           </div>
         </div>

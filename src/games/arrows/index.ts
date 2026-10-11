@@ -1,15 +1,14 @@
 import type { Game } from '../../kit/game';
-import { apply, isMistake, start, status, type ArrowsMove, type ArrowsPuzzle, type ArrowsState } from './rules';
-import { tuning } from './tuning';
+import { apply, start, status, type ArrowsMove, type ArrowsPuzzle, type ArrowsState } from './rules';
 import { View } from './View';
 
 export const arrows: Game<ArrowsPuzzle, ArrowsState, ArrowsMove> = {
   id: 'arrows',
-  adaptive: tuning.adaptive,
   options: [],
   start,
   apply,
   status,
-  isMistake,
+  // No tap is wrong in itself; a bad one shows up later, as a knot that will not come undone.
+  isMistake: () => false,
   View,
 };

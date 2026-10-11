@@ -1,43 +1,30 @@
 // Everything about the arrow puzzle that is a matter of taste rather than rules.
 
-import type { AdaptiveTuning } from '../../kit/adaptive';
-
 export const tuning = {
-  adaptive: {
-    startLevel: 32,
-    floor: 3,
-    ceiling: 98,
-    startStep: 8,
-    minStep: 2,
-    silentWeight: 0.4,
-    breatherPercent: 12,
-    stretchPercent: 12,
-    breatherBy: 9,
-    stretchBy: 6,
-  } satisfies AdaptiveTuning,
-
   /**
-   * Board size and longest arrow by level. Bigger boards with longer, more
-   * winding arrows make each arrow's way out harder to trace. Within a size,
-   * a board scores higher the smaller the share of its arrows that can leave
-   * at the start: `easyFree` scores `from`, `hardFree` scores `to`.
+   * Board size and longest arrow by level. Within a size, a knot scores
+   * higher the more traps it has: moments on the way to clearing it where a
+   * wrong tap locks it for good. `hardTraps` or more scores `to`. A knot that
+   * cannot be undone without first nudging arrows forward to make room counts
+   * as having `nudgeWorth` more.
    */
   bands: [
-    { w: 7, h: 9, longest: 7, from: 3, to: 15, easyFree: 0.6, hardFree: 0.3 },
-    { w: 9, h: 12, longest: 10, from: 15, to: 30, easyFree: 0.5, hardFree: 0.22 },
-    { w: 12, h: 16, longest: 14, from: 30, to: 48, easyFree: 0.42, hardFree: 0.16 },
-    { w: 15, h: 20, longest: 18, from: 48, to: 66, easyFree: 0.36, hardFree: 0.16 },
-    { w: 18, h: 24, longest: 22, from: 66, to: 83, easyFree: 0.34, hardFree: 0.15 },
-    { w: 21, h: 28, longest: 26, from: 83, to: 100, easyFree: 0.32, hardFree: 0.13 },
+    { w: 5, h: 5, longest: 4, from: 0, to: 20, hardTraps: 3 },
+    { w: 6, h: 6, longest: 5, from: 20, to: 45, hardTraps: 5 },
+    { w: 7, h: 7, longest: 6, from: 45, to: 70, hardTraps: 7 },
+    { w: 8, h: 8, longest: 7, from: 70, to: 100, hardTraps: 9 },
   ],
 
   /** How likely an arrow's body is to carry straight on rather than bend, 0 to 1. */
-  straightness: 0.5,
-  /** At the easy end of a size, up to this share of the arrows are lifted out to loosen the knot. */
-  mostLoosening: 0.3,
-  /** How many boards the generator makes before keeping the closest to the target. */
-  attempts: 12,
-
-  /** Sending an arrow into another costs a life; with none left the puzzle is lost. */
-  lives: 3,
+  straightness: 0.45,
+  nudgeWorth: 2,
+  /** How many knots the generator ties before keeping the closest to the target. */
+  attempts: 30,
+  /**
+   * Checking a knot means searching its positions. These cap the search: for
+   * one knot, and for all the knots tried for one puzzle. Higher makes better
+   * puzzles, and makes her wait longer for them.
+   */
+  searchPerKnot: 6000,
+  searchPerPuzzle: 90_000,
 };

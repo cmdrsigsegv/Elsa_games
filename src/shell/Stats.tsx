@@ -1,31 +1,15 @@
-// What she has played, per game, and how her level has moved.
+// What she has played, per game.
 
 import { useEffect, useState } from 'preact/hooks';
 import { games } from '../games';
-import { loadSkill } from '../kit/session';
+import { loadProgress } from '../kit/progress';
 import { loadPlayed, summarise, type Summary } from '../kit/stats';
 import { clockText } from './Play';
 import { t } from './strings';
 
 interface GameStats extends Summary {
   id: string;
-  level: number;
-}
-
-/** Her level after each puzzle, as a line: flat means the difficulty has settled. */
-function LevelLine({ levels }: { levels: number[] }) {
-  if (levels.length < 2) return null;
-  const w = 300;
-  const h = 64;
-  const points = levels.map((level, i) => `${(i / (levels.length - 1)) * w},${h - 4 - (level / 100) * (h - 8)}`).join(' ');
-  return (
-    <figure class="level-line">
-      <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" role="img" aria-label={t.stats.levelOverTime}>
-        <polyline points={points} fill="none" stroke="var(--accent)" stroke-width="2" vector-effect="non-scaling-stroke" />
-      </svg>
-      <figcaption>{t.stats.levelOverTime}</figcaption>
-    </figure>
-  );
+  difficulty: number;
 }
 
 export function Stats({ onExit }: { onExit(): void }) {
@@ -34,8 +18,8 @@ export function Stats({ onExit }: { onExit(): void }) {
   useEffect(() => {
     void Promise.all(
       games.map(async (g) => {
-        const [played, skill] = await Promise.all([loadPlayed(g.id), loadSkill(g.id, g.adaptive)]);
-        return { id: g.id, level: Math.round(skill.level), ...summarise(played) };
+        const [played, progress] = await Promise.all([loadPlayed(g.id), loadProgress(g.id)]);
+        return { id: g.id, difficulty: progress.difficulty, ...summarise(played) };
       }),
     ).then(setStats);
   }, []);
@@ -52,11 +36,10 @@ export function Stats({ onExit }: { onExit(): void }) {
       {stats?.map((s) => (
         <section class="setting" key={s.id}>
           <h2>{t.games[s.id]}</h2>
-          {s.levels.length === 0 ? (
+          {s.played === 0 ? (
             <p>{t.stats.none}</p>
           ) : (
-            <>
-              <dl class="figures">
+            <dl class="figures">
                 <div>
                   <dt>{t.stats.solved}</dt>
                   <dd>{s.solved}</dd>
@@ -70,12 +53,10 @@ export function Stats({ onExit }: { onExit(): void }) {
                   <dd>{s.usualMs === null ? '–' : clockText(s.usualMs)}</dd>
                 </div>
                 <div>
-                  <dt>{t.stats.level}</dt>
-                  <dd>{s.level}</dd>
+                  <dt>{t.stats.difficulty}</dt>
+                  <dd>{s.difficulty}</dd>
                 </div>
               </dl>
-              <LevelLine levels={s.levels} />
-            </>
           )}
         </section>
       ))}

@@ -44,6 +44,14 @@ export interface StackState {
 /** Slide a block to a new column, or let the round go by without moving anything. */
 export type StackMove = { block: number; to: number } | { pass: true };
 
+/**
+ * One step of what happens after a move, for the screen to play back in
+ * order: blocks coming to rest somewhere new, or rows clearing.
+ */
+export type Frame =
+  | { kind: 'move'; blocks: Block[] }
+  | { kind: 'clear'; blocks: Block[]; rows: number[]; chain: number; gained: number };
+
 /** There is nothing to generate ahead of time: the blocks are dealt as the game goes, at this level. */
 export const generate = (seed: number, target: number): StackPuzzle => ({ seed, score: target });
 
@@ -96,29 +104,42 @@ export function fullRows(blocks: Block[]): number[] {
   return filled.flatMap((n, row) => (n === W ? [row] : []));
 }
 
-/** Falls and clears until nothing more happens. Each further row in a chain reaction is worth more. */
-export function settle(blocks: Block[]): { blocks: Block[]; points: number } {
+const moved = (a: Block[], b: Block[]) => b.some((x) => a.find((y) => y.id === x.id)?.row !== x.row);
+
+/**
+ * Falls and clears until nothing more happens. Each clearing that follows
+ * from the one before, without another move, is a link in a chain, and each
+ * link is worth more. Every step is added to `frames`.
+ */
+export function settle(blocks: Block[], frames: Frame[] = [], chain = 1): { blocks: Block[]; points: number; chain: number } {
   let now = fall(blocks);
+  if (moved(blocks, now)) frames.push({ kind: 'move', blocks: now });
   let points = 0;
-  for (let chain = 1; ; ) {
+  for (;;) {
     const rows = fullRows(now);
-    if (!rows.length) return { blocks: now, points };
-    rows.forEach(() => (points += tuning.rowPoints * chain++));
-    now = fall(now.filter((b) => !rows.includes(b.row)));
+    if (!rows.length) return { blocks: now, points, chain };
+    const gained = tuning.rowPoints * chain * rows.length;
+    points += gained;
+    frames.push({ kind: 'clear', blocks: now, rows, chain, gained });
+    chain++;
+    const left = now.filter((b) => !rows.includes(b.row));
+    now = fall(left);
+    if (moved(left, now)) frames.push({ kind: 'move', blocks: now });
   }
 }
 
+const between = ([at0, at100]: number[], level: number) => at0 + ((at100 - at0) * level) / 100;
+
 function length(rng: Random, level: number): number {
-  // Short blocks are easy to fit; higher levels see more of the long ones.
-  const hard = level / 100;
-  const weights = [1.3 - hard * 0.6, 1.2, 0.6 + hard * 0.5, 0.2 + hard * 0.5];
+  const weights = tuning.lengths.map((w) => between(w, level));
   let pick = rng.next() * weights.reduce((a, b) => a + b, 0);
   return 1 + weights.findIndex((w) => (pick -= w) < 0);
 }
 
-/** The blocks for one drop: one at the kind levels, up to three at the harsh ones, never touching. */
-export function deal(rng: Random, level: number, most = 3): Coming[] {
-  const count = Math.min(most, 1 + (rng.next() < level / 90 ? 1 : 0) + (rng.next() < (level - 50) / 80 ? 1 : 0));
+/** The blocks for one drop: more of them, and longer, at higher levels; never touching. */
+export function deal(rng: Random, level: number): Coming[] {
+  let count = 1;
+  for (const chance of tuning.extraBlocks) if (rng.next() < between(chance, level)) count++;
   const taken = new Uint8Array(W);
   const out: Coming[] = [];
   for (let n = 0; n < count; n++) {
@@ -142,7 +163,7 @@ const dealRng = (p: StackPuzzle, round: number) => random((p.seed ^ Math.imul(ro
 export function start(p: StackPuzzle): StackState {
   const rng = dealRng(p, -1);
   const blocks: Block[] = [];
-  // The opening rows are dealt like drops, but fuller, and always with a gap.
+  // The opening rows are dealt like drops at a high level, so they are well filled.
   for (let r = 0; r < tuning.startRows; r++) {
     for (const c of deal(rng, 80)) blocks.push({ ...c, id: blocks.length, row: H - 1 - r });
   }
@@ -150,18 +171,22 @@ export function start(p: StackPuzzle): StackState {
   return { blocks: settled, coming: deal(dealRng(p, 0), p.score), points: 0, rounds: 0, nextId: blocks.length, over: false };
 }
 
-/** Returns the same state object when the move changes nothing. */
-export function apply(p: StackPuzzle, s: StackState, m: StackMove): StackState {
-  if (s.over) return s;
+/**
+ * Plays a move: the new state, and the steps that lead to it. The state is
+ * the same object as before when the move changes nothing.
+ */
+export function play(p: StackPuzzle, s: StackState, m: StackMove): { state: StackState; frames: Frame[] } {
+  const frames: Frame[] = [];
+  if (s.over) return { state: s, frames };
   let blocks = s.blocks;
   if (!('pass' in m)) {
     const b = s.blocks.find((x) => x.id === m.block);
-    if (!b || m.to === b.col) return s;
+    if (!b || m.to === b.col) return { state: s, frames };
     const [lo, hi] = reach(s.blocks, b.id);
-    if (m.to < lo || m.to > hi) return s;
+    if (m.to < lo || m.to > hi) return { state: s, frames };
     blocks = s.blocks.map((x) => (x.id === b.id ? { ...x, col: m.to } : x));
   }
-  const afterSlide = settle(blocks);
+  const afterSlide = settle(blocks, frames);
 
   // The drop. A block that finds its place at the top already taken ends the game.
   const grid = cover(afterSlide.blocks);
@@ -172,18 +197,25 @@ export function apply(p: StackPuzzle, s: StackState, m: StackMove): StackState {
     for (let k = 0; k < c.len; k++) if (grid[c.col + k] >= 0) over = true;
     dropped.push({ ...c, id: nextId++, row: 0 });
   }
-  if (over) return { ...s, blocks: afterSlide.blocks, points: s.points + afterSlide.points, over: true };
-  const afterDrop = settle(dropped);
+  if (over) return { state: { ...s, blocks: afterSlide.blocks, points: s.points + afterSlide.points, over: true }, frames };
+  frames.push({ kind: 'move', blocks: dropped });
+  // A row the drop completes carries the chain on.
+  const afterDrop = settle(dropped, frames, afterSlide.chain);
   const rounds = s.rounds + 1;
   return {
-    blocks: afterDrop.blocks,
-    coming: deal(dealRng(p, rounds), p.score),
-    points: s.points + afterSlide.points + afterDrop.points,
-    rounds,
-    nextId,
-    over: false,
+    state: {
+      blocks: afterDrop.blocks,
+      coming: deal(dealRng(p, rounds), p.score),
+      points: s.points + afterSlide.points + afterDrop.points,
+      rounds,
+      nextId,
+      over: false,
+    },
+    frames,
   };
 }
+
+export const apply = (p: StackPuzzle, s: StackState, m: StackMove): StackState => play(p, s, m).state;
 
 export function status(_p: StackPuzzle, s: StackState): { ended: boolean; lost: boolean } {
   return { ended: s.over, lost: s.over };

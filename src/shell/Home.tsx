@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'preact/hooks';
 import { games } from '../games';
 import type { Game } from '../kit/game';
-import { loadSession, loadSkill } from '../kit/session';
+import { SET_SIZE, loadProgress, setAt } from '../kit/progress';
 import { applyUpdate, findUpdate } from '../kit/update';
 import { t } from './strings';
 
 interface Info {
-  inProgress: boolean;
-  level: number;
+  difficulty: number;
+  solved: number;
 }
 
 export function Home({ onOpen, onStats, onSettings }: { onOpen(game: Game): void; onStats(): void; onSettings(): void }) {
@@ -24,8 +24,9 @@ export function Home({ onOpen, onStats, onSettings }: { onOpen(game: Game): void
   useEffect(() => {
     void Promise.all(
       games.map(async (g) => {
-        const [session, skill] = await Promise.all([loadSession(g.id), loadSkill(g.id, g.adaptive)]);
-        return [g.id, { inProgress: !!session && !session.ended, level: Math.round(skill.level) }] as const;
+        const progress = await loadProgress(g.id);
+        const solved = setAt(progress, progress.difficulty).solved.filter(Boolean).length;
+        return [g.id, { difficulty: progress.difficulty, solved }] as const;
       }),
     ).then((entries) => setInfo(Object.fromEntries(entries)));
   }, []);
@@ -45,7 +46,8 @@ export function Home({ onOpen, onStats, onSettings }: { onOpen(game: Game): void
               <span class="name">{t.games[g.id]}</span>
               {info[g.id] && (
                 <span class="sub">
-                  {info[g.id].inProgress ? t.home.continue : t.home.newPuzzle} · {t.home.level(info[g.id].level)}
+                  {t.home.difficulty(info[g.id].difficulty)}
+                  {!g.endless && ` · ${t.home.solvedOf(info[g.id].solved, SET_SIZE)}`}
                 </span>
               )}
             </button>

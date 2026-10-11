@@ -1,11 +1,9 @@
 import type { Game } from '../../kit/game';
 import { apply, start, status, type GridlockMove, type GridlockPuzzle, type GridlockState } from './rules';
-import { tuning } from './tuning';
 import { View } from './View';
 
 export const gridlock: Game<GridlockPuzzle, GridlockState, GridlockMove> = {
   id: 'gridlock',
-  adaptive: tuning.adaptive,
   options: [],
   start,
   apply,

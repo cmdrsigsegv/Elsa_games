@@ -250,12 +250,14 @@ button {
   aspect-ratio: auto;
 }
 
+.pour .message,
 .arrows .message,
 .nonogram .message {
   flex: none;
 }
 
 .sudoku,
+.pour,
 .gridlock,
 .stack,
 .arrows,
@@ -561,6 +563,72 @@ button {
 .scoreline strong {
   color: var(--ink);
   font-size: 1.5rem;
+}
+
+.tools.spaced {
+  margin-top: 1rem;
+}
+
+/* --- A game's front page: difficulty, and the set of puzzles --- */
+
+.difficulty {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1rem 0 1.25rem;
+  text-align: center;
+}
+
+.difficulty button {
+  min-height: 3rem;
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  background: var(--surface);
+  font-weight: 600;
+}
+
+.difficulty button:disabled {
+  opacity: 0.35;
+}
+
+.tiles {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.5rem;
+}
+
+.tiles button {
+  width: 100%;
+  aspect-ratio: 1;
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  background: var(--surface);
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.tiles button.done {
+  background: var(--tint-selected);
+  color: var(--accent);
+}
+
+.tiles button.next {
+  border: 2px solid var(--accent);
+}
+
+.tiles button.begun {
+  border-style: dashed;
+  border-color: var(--accent);
+}
+
+.tally {
+  margin: 0.75rem 0 1rem;
+  color: var(--ink-quiet);
+  text-align: center;
 }
 
 .home-links {

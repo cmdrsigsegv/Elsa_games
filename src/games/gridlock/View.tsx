@@ -1,11 +1,12 @@
-// Gridlock's screen: the car park, the slide count, and Undo and Hint. A car
+// Gridlock's screen: the car park, the slide count, and Undo. There is no
+// hint: working it out is the whole game. A car
 // is dragged along its own length and settles on the nearest cell.
 
 import { useRef, useState } from 'preact/hooks';
 import { Board, type Theme } from '../../kit/Board';
 import type { ViewProps } from '../../kit/game';
 import { t } from '../../shell/strings';
-import { EXIT_ROW, N, cover, reach, solve, type GridlockMove, type GridlockPuzzle, type GridlockState } from './rules';
+import { EXIT_ROW, N, cover, reach, type GridlockMove, type GridlockPuzzle, type GridlockState } from './rules';
 
 type Props = ViewProps<GridlockPuzzle, GridlockState, GridlockMove>;
 
@@ -62,13 +63,9 @@ function draw(ctx: CanvasRenderingContext2D, size: number, theme: Theme, p: Grid
   });
 }
 
-export function View({ puzzle, state, ended, play, undo, canUndo, countHint }: Props) {
+export function View({ puzzle, state, ended, play, undo, canUndo }: Props) {
   const [drag, setDrag] = useState<Drag | null>(null);
   const live = useRef<Drag | null>(null);
-  const [hinted, setHinted] = useState<{ move: GridlockMove; at: number } | null>(null);
-  // A hint lasts until the next move.
-  const hint = hinted && hinted.at === state.moves ? hinted.move : null;
-
   const set = (next: Drag | null) => {
     live.current = next;
     setDrag(next);
@@ -109,33 +106,12 @@ export function View({ puzzle, state, ended, play, undo, canUndo, countHint }: P
             if (phase === 'end') play({ car: d.car, to: Math.round(d.pos) });
           }
         }}
-        draw={(ctx, size, _height, theme) => draw(ctx, size, theme, puzzle, at, hint?.car ?? null)}
+        draw={(ctx, size, _height, theme) => draw(ctx, size, theme, puzzle, at, drag?.car ?? null)}
       />
 
-      <p class="message" aria-live="polite">
-        {hint ? t.gridlock.hinted : ' '}
-      </p>
-
-      <div class="tools two">
+      <div class="tools one spaced">
         <button type="button" disabled={!canUndo || ended} onClick={undo}>
           {t.gridlock.undo}
-        </button>
-        <button
-          type="button"
-          disabled={ended}
-          onClick={() => {
-            if (hint) {
-              // Second press: make the slide.
-              play(hint);
-              return;
-            }
-            const first = solve(puzzle.cars, state.at)?.[0];
-            if (!first) return;
-            countHint();
-            setHinted({ move: first, at: state.moves });
-          }}
-        >
-          {t.gridlock.hint}
         </button>
       </div>
     </div>

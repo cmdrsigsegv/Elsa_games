@@ -1,25 +1,6 @@
 // Everything about nonograms that is a matter of taste rather than rules.
 
-import type { AdaptiveTuning } from '../../kit/adaptive';
-
 export const tuning = {
-  /**
-   * Difficulty runs from 0 to 100. She is used to large picture nonograms, so
-   * 15 by 15 sits low on the scale and the top is 30 by 30.
-   */
-  adaptive: {
-    startLevel: 30,
-    floor: 3,
-    ceiling: 98,
-    startStep: 8,
-    minStep: 2,
-    silentWeight: 0.4,
-    breatherPercent: 12,
-    stretchPercent: 12,
-    breatherBy: 9,
-    stretchBy: 6,
-  } satisfies AdaptiveTuning,
-
   /**
    * Grid size by level. Within a size, a puzzle scores higher the more times
    * the lines have to be gone over to finish it: `easyRounds` scores `from`,

@@ -12,7 +12,7 @@ const en = {
   appName: "Elsa's Games",
   version: (v: string) => `Version ${v}`,
 
-  games: { sudoku: 'Sudoku', nonogram: 'Nonogram', arrows: 'Arrows', stack: 'Blocks', gridlock: 'Gridlock' } as Record<string, string>,
+  games: { sudoku: 'Sudoku', nonogram: 'Nonogram', arrows: 'Arrows', stack: 'Blocks', gridlock: 'Gridlock', pour: 'Liquids' } as Record<string, string>,
 
   /** Words for each game's options: options.<game id>.<option key>. */
   options: {
@@ -31,9 +31,8 @@ const en = {
   } as OptionWords,
 
   home: {
-    continue: 'Continue',
-    newPuzzle: 'New puzzle',
-    level: (n: number) => `Level ${n}`,
+    difficulty: (n: number) => `Difficulty ${n}`,
+    solvedOf: (n: number, of: number) => `${n} of ${of} solved`,
     statistics: 'Statistics',
     settings: 'Settings',
     updateReady: 'A new version is ready. Tap to update.',
@@ -44,23 +43,29 @@ const en = {
 
   play: {
     back: 'Back',
-    newPuzzle: 'New',
+    restart: 'Restart',
+    puzzle: (n: number) => `Puzzle ${n}`,
     options: 'Options',
     done: 'Done',
     preparing: 'Making a puzzle…',
     solved: 'Solved!',
     gameOver: 'Game over',
-    howWasIt: 'How was that one?',
-    tooEasy: 'Too easy',
-    justRight: 'Just right',
-    tooHard: 'Too hard',
-    skip: 'Next puzzle',
-    home: 'Home',
+    next: 'Next puzzle',
+    nextSet: 'Set finished! On to the next',
+    allPuzzles: 'All puzzles',
+    again: 'Play again',
     hints: (n: number) => (n === 1 ? '1 hint' : `${n} hints`),
-    abandonTitle: 'Start a new puzzle?',
-    abandonBody: 'This one will not be saved.',
-    abandonYes: 'New puzzle',
-    abandonNo: 'Keep playing',
+    restartTitle: 'Start this one again?',
+    restartYes: 'Restart',
+    restartNo: 'Keep playing',
+  },
+
+  picker: {
+    of: (n: number, of: number) => `Difficulty ${n} of ${of}`,
+    easier: 'Easier',
+    harder: 'Harder',
+    play: 'Play',
+    setDone: 'Set finished. Next set',
   },
 
   settings: {
@@ -89,8 +94,7 @@ const en = {
     solved: 'Solved',
     noHints: 'Without a hint',
     averageTime: 'Usual time',
-    level: 'Level now',
-    levelOverTime: 'Level, puzzle by puzzle',
+    difficulty: 'Difficulty now',
   },
 
   sudoku: {
@@ -140,17 +144,22 @@ const en = {
     undo: 'Undo',
     hint: 'Hint',
     left: (n: number) => (n === 1 ? '1 arrow left' : `${n} arrows left`),
-    blocked: 'Another arrow is in the way.',
-    hinted: 'This arrow can go.',
-    lives: (n: number) => (n === 1 ? '1 life left' : `${n} lives left`),
+    blocked: 'It cannot move: another arrow is right in front of it.',
+    hinted: 'Tap this one next.',
+    stuck: 'Nothing can move. Undo, or restart.',
+    lost: 'It cannot be cleared from here. Undo a few taps.',
   },
 
   gridlock: {
     undo: 'Undo',
-    hint: 'Hint',
     moves: (n: number) => (n === 1 ? '1 slide' : `${n} slides`),
     par: (n: number) => `Can be done in ${n}`,
-    hinted: 'Slide this one. Tap Hint again to see where.',
+  },
+
+  pour: {
+    undo: 'Undo',
+    moves: (n: number) => (n === 1 ? '1 pour' : `${n} pours`),
+    stuck: 'No pour left that helps. Undo, or restart.',
   },
 
   blocks: {
@@ -158,6 +167,7 @@ const en = {
     best: (n: number) => `Best ${n}`,
     newBest: 'New best!',
     pass: 'Leave it and drop',
+    chain: (n: number) => `Chain ×${n}`,
   },
 };
 
@@ -169,7 +179,7 @@ const af: Strings = {
   appName: 'Elsa se Speletjies',
   version: (v) => `Weergawe ${v}`,
 
-  games: { sudoku: 'Sudoku', nonogram: 'Nonogram', arrows: 'Pyle', stack: 'Blokke', gridlock: 'Verkeersknoop' },
+  games: { sudoku: 'Sudoku', nonogram: 'Nonogram', arrows: 'Pyle', stack: 'Blokke', gridlock: 'Verkeersknoop', pour: 'Vloeistowwe' },
 
   options: {
     sudoku: {
@@ -187,9 +197,8 @@ const af: Strings = {
   },
 
   home: {
-    continue: 'Gaan voort',
-    newPuzzle: 'Nuwe raaisel',
-    level: (n) => `Vlak ${n}`,
+    difficulty: (n) => `Moeilikheid ${n}`,
+    solvedOf: (n, of) => `${n} van ${of} opgelos`,
     statistics: 'Statistiek',
     settings: 'Instellings',
     updateReady: '’n Nuwe weergawe is gereed. Tik om op te dateer.',
@@ -200,23 +209,29 @@ const af: Strings = {
 
   play: {
     back: 'Terug',
-    newPuzzle: 'Nuwe',
+    restart: 'Begin oor',
+    puzzle: (n) => `Raaisel ${n}`,
     options: 'Opsies',
     done: 'Klaar',
     preparing: 'Maak ’n raaisel…',
     solved: 'Opgelos!',
     gameOver: 'Spel verby',
-    howWasIt: 'Hoe was daardie een?',
-    tooEasy: 'Te maklik',
-    justRight: 'Net reg',
-    tooHard: 'Te moeilik',
-    skip: 'Volgende raaisel',
-    home: 'Tuis',
+    next: 'Volgende raaisel',
+    nextSet: 'Stel klaar! Aan na die volgende',
+    allPuzzles: 'Alle raaisels',
+    again: 'Speel weer',
     hints: (n) => (n === 1 ? '1 wenk' : `${n} wenke`),
-    abandonTitle: 'Begin ’n nuwe raaisel?',
-    abandonBody: 'Hierdie een sal nie gestoor word nie.',
-    abandonYes: 'Nuwe raaisel',
-    abandonNo: 'Speel verder',
+    restartTitle: 'Begin hierdie een oor?',
+    restartYes: 'Begin oor',
+    restartNo: 'Speel verder',
+  },
+
+  picker: {
+    of: (n, of) => `Moeilikheid ${n} van ${of}`,
+    easier: 'Makliker',
+    harder: 'Moeiliker',
+    play: 'Speel',
+    setDone: 'Stel klaar. Volgende stel',
   },
 
   settings: {
@@ -245,8 +260,7 @@ const af: Strings = {
     solved: 'Opgelos',
     noHints: 'Sonder ’n wenk',
     averageTime: 'Gewone tyd',
-    level: 'Vlak nou',
-    levelOverTime: 'Vlak, raaisel vir raaisel',
+    difficulty: 'Moeilikheid nou',
   },
 
   sudoku: {
@@ -295,17 +309,22 @@ const af: Strings = {
     undo: 'Ontdoen',
     hint: 'Wenk',
     left: (n) => (n === 1 ? '1 pyl oor' : `${n} pyle oor`),
-    blocked: '’n Ander pyl is in die pad.',
-    hinted: 'Hierdie pyl kan gaan.',
-    lives: (n) => (n === 1 ? '1 lewe oor' : `${n} lewens oor`),
+    blocked: 'Dit kan nie beweeg nie: ’n ander pyl is reg voor dit.',
+    hinted: 'Tik volgende op hierdie een.',
+    stuck: 'Niks kan beweeg nie. Ontdoen, of begin oor.',
+    lost: 'Dit kan nie van hier af skoongemaak word nie. Ontdoen ’n paar tikke.',
   },
 
   gridlock: {
     undo: 'Ontdoen',
-    hint: 'Wenk',
     moves: (n) => (n === 1 ? '1 skuif' : `${n} skuiwe`),
     par: (n) => `Kan in ${n} gedoen word`,
-    hinted: 'Skuif hierdie een. Tik weer op Wenk om te sien waarheen.',
+  },
+
+  pour: {
+    undo: 'Ontdoen',
+    moves: (n) => (n === 1 ? '1 keer gegooi' : `${n} keer gegooi`),
+    stuck: 'Niks meer om te gooi wat help nie. Ontdoen, of begin oor.',
   },
 
   blocks: {
@@ -313,6 +332,7 @@ const af: Strings = {
     best: (n) => `Beste ${n}`,
     newBest: 'Nuwe beste!',
     pass: 'Los dit en laat val',
+    chain: (n) => `Ketting ×${n}`,
   },
 };
 

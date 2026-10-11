@@ -1,21 +1,6 @@
 // Everything about Gridlock that is a matter of taste rather than rules.
 
-import type { AdaptiveTuning } from '../../kit/adaptive';
-
 export const tuning = {
-  adaptive: {
-    startLevel: 30,
-    floor: 3,
-    ceiling: 97,
-    startStep: 8,
-    minStep: 2,
-    silentWeight: 0.4,
-    breatherPercent: 12,
-    stretchPercent: 12,
-    breatherBy: 9,
-    stretchBy: 6,
-  } satisfies AdaptiveTuning,
-
   /**
    * Difficulty is the fewest slides that solve the puzzle: `easiest` slides
    * at level 0, `hardest` at level 100, evenly in between.

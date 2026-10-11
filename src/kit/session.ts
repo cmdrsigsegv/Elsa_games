@@ -1,7 +1,6 @@
 // A puzzle in progress: everything needed to put the game back exactly as it
-// was. Saved after every move; one per game.
+// was. Saved after every move; one per puzzle, under its place.
 
-import { initialSkill, type AdaptiveTuning, type Skill } from './adaptive';
 import type { Game, PuzzleBase } from './game';
 import { load, remove, save } from '../storage/kv';
 
@@ -50,20 +49,14 @@ export function undo<P extends PuzzleBase, S>(session: Session<P, S>): Session<P
 /** Whether she has done anything in this puzzle yet. */
 export const started = (session: Session) => session.history.length > 1;
 
-const sessionKey = (gameId: string) => `session:${gameId}`;
-const skillKey = (gameId: string) => `skill:${gameId}`;
+const sessionKey = (place: string) => `session:${place}`;
 
-export async function loadSession<P extends PuzzleBase, S>(gameId: string): Promise<Session<P, S> | undefined> {
-  const session = await load<Session<P, S>>(sessionKey(gameId));
+export async function loadSession<P extends PuzzleBase, S>(place: string): Promise<Session<P, S> | undefined> {
+  const session = await load<Session<P, S>>(sessionKey(place));
   return session?.version === 1 ? session : undefined;
 }
-export const saveSession = (gameId: string, session: Session) => save(sessionKey(gameId), session);
-export const clearSession = (gameId: string) => remove(sessionKey(gameId));
-
-export async function loadSkill(gameId: string, tuning: AdaptiveTuning): Promise<Skill> {
-  return (await load<Skill>(skillKey(gameId))) ?? initialSkill(tuning);
-}
-export const saveSkill = (gameId: string, skill: Skill) => save(skillKey(gameId), skill);
+export const saveSession = (place: string, session: Session) => save(sessionKey(place), session);
+export const clearSession = (place: string) => remove(sessionKey(place));
 
 const optionsKey = (gameId: string) => `options:${gameId}`;
 

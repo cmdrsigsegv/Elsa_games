@@ -6,7 +6,6 @@ import { View } from './View';
 
 export const sudoku: Game<SudokuPuzzle, SudokuState, SudokuMove> = {
   id: 'sudoku',
-  adaptive: tuning.adaptive,
   options: [{ key: 'mistakes', choices: ['obvious', 'always'], initial: tuning.mistakes }],
   start,
   apply,
