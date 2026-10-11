@@ -256,6 +256,7 @@ button {
 }
 
 .sudoku,
+.blocks,
 .arrows,
 .nonogram {
   flex: 1;
@@ -519,6 +520,37 @@ button {
   margin-top: 0.3rem;
   color: var(--ink-quiet);
   font-size: 0.8rem;
+}
+
+.update {
+  width: 100%;
+  min-height: 3.25rem;
+  margin-bottom: 1rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--accent);
+  border-radius: 0.875rem;
+  background: var(--tint-selected);
+  font-weight: 600;
+}
+
+.version .ghost {
+  display: block;
+  margin: 0 auto;
+  font-size: 0.8rem;
+}
+
+.scoreline {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 0.25rem 0.25rem 0.75rem;
+  color: var(--ink-quiet);
+  font-variant-numeric: tabular-nums;
+}
+
+.scoreline strong {
+  color: var(--ink);
+  font-size: 1.5rem;
 }
 
 .home-links {

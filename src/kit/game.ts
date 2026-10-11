@@ -49,6 +49,17 @@ export interface Game<P extends PuzzleBase = any, S = any, M = any> {
   status(puzzle: P, state: S): { ended: boolean };
   isMistake(puzzle: P, state: S, move: M): boolean;
 
+  /**
+   * For a game that is lost rather than solved: the closing sheet says
+   * "Game over" and shows this line in place of the time taken.
+   */
+  endSummary?(puzzle: P, state: S): string;
+  /**
+   * What the adaptive difficulty compares from game to game in place of the
+   * time taken. Lower means it went better than usual.
+   */
+  effort?(puzzle: P, state: S): number;
+
   /** The board and its controls. */
   View: ComponentType<ViewProps<P, S, M>>;
 }

@@ -129,7 +129,7 @@ export function Play({ game, onExit }: { game: Game; onExit(): void }) {
         {
           score: session.puzzle.score,
           rating,
-          timeMs: elapsed(),
+          timeMs: game.effort ? game.effort(session.puzzle, current(session)) : elapsed(),
           hints: session.hints,
           mistakes: session.mistakes,
           abandoned,
@@ -201,10 +201,10 @@ export function Play({ game, onExit }: { game: Game; onExit(): void }) {
       )}
 
       {session?.ended && (
-        <div class="sheet" role="dialog" aria-label={t.play.solved}>
-          <h2>{t.play.solved}</h2>
+        <div class="sheet" role="dialog" aria-label={game.endSummary ? t.play.gameOver : t.play.solved}>
+          <h2>{game.endSummary ? t.play.gameOver : t.play.solved}</h2>
           <p class="summary">
-            {clockText(elapsed())}
+            {game.endSummary?.(session.puzzle, current(session)) ?? clockText(elapsed())}
             {session.hints > 0 && ` · ${t.play.hints(session.hints)}`}
           </p>
           <p>{t.play.howWasIt}</p>

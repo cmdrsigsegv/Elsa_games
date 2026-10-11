@@ -12,7 +12,7 @@ const en = {
   appName: "Elsa's Games",
   version: (v: string) => `Version ${v}`,
 
-  games: { sudoku: 'Sudoku', nonogram: 'Nonogram', arrows: 'Arrows' } as Record<string, string>,
+  games: { sudoku: 'Sudoku', nonogram: 'Nonogram', arrows: 'Arrows', blocks: 'Blocks' } as Record<string, string>,
 
   /** Words for each game's options: options.<game id>.<option key>. */
   options: {
@@ -36,6 +36,10 @@ const en = {
     level: (n: number) => `Level ${n}`,
     statistics: 'Statistics',
     settings: 'Settings',
+    updateReady: 'A new version is ready. Tap to update.',
+    checkUpdate: 'Check for an update',
+    checking: 'Checking…',
+    upToDate: 'Up to date',
   },
 
   play: {
@@ -45,6 +49,7 @@ const en = {
     done: 'Done',
     preparing: 'Making a puzzle…',
     solved: 'Solved!',
+    gameOver: 'Game over',
     howWasIt: 'How was that one?',
     tooEasy: 'Too easy',
     justRight: 'Just right',
@@ -138,6 +143,12 @@ const en = {
     blocked: 'Another arrow is in the way.',
     hinted: 'This arrow can go.',
   },
+
+  blocks: {
+    score: (n: number) => `Score ${n}`,
+    best: (n: number) => `Best ${n}`,
+    newBest: 'New best!',
+  },
 };
 
 export type Strings = typeof en;
@@ -148,7 +159,7 @@ const af: Strings = {
   appName: 'Elsa se Speletjies',
   version: (v) => `Weergawe ${v}`,
 
-  games: { sudoku: 'Sudoku', nonogram: 'Nonogram', arrows: 'Pyle' },
+  games: { sudoku: 'Sudoku', nonogram: 'Nonogram', arrows: 'Pyle', blocks: 'Blokke' },
 
   options: {
     sudoku: {
@@ -171,6 +182,10 @@ const af: Strings = {
     level: (n) => `Vlak ${n}`,
     statistics: 'Statistiek',
     settings: 'Instellings',
+    updateReady: '’n Nuwe weergawe is gereed. Tik om op te dateer.',
+    checkUpdate: 'Soek ’n opdatering',
+    checking: 'Soek…',
+    upToDate: 'Op datum',
   },
 
   play: {
@@ -180,6 +195,7 @@ const af: Strings = {
     done: 'Klaar',
     preparing: 'Maak ’n raaisel…',
     solved: 'Opgelos!',
+    gameOver: 'Spel verby',
     howWasIt: 'Hoe was daardie een?',
     tooEasy: 'Te maklik',
     justRight: 'Net reg',
@@ -271,6 +287,12 @@ const af: Strings = {
     left: (n) => (n === 1 ? '1 pyl oor' : `${n} pyle oor`),
     blocked: '’n Ander pyl is in die pad.',
     hinted: 'Hierdie pyl kan gaan.',
+  },
+
+  blocks: {
+    score: (n) => `Telling ${n}`,
+    best: (n) => `Beste ${n}`,
+    newBest: 'Nuwe beste!',
   },
 };
 

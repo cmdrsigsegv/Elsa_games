@@ -3,6 +3,7 @@
 
 import type { PuzzleBase } from '../kit/game';
 import { generate as arrows } from './arrows/generate';
+import { generate as blocks } from './blocks/rules';
 import { generate as nonogram } from './nonogram/generate';
 import { generate as sudoku } from './sudoku/generate';
 
@@ -10,4 +11,5 @@ export const generators: Record<string, (seed: number, target: number) => Puzzle
   sudoku,
   nonogram,
   arrows,
+  blocks,
 };

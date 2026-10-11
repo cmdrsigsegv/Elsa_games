@@ -2,6 +2,7 @@ import { useEffect, useState } from 'preact/hooks';
 import { games } from '../games';
 import type { Game } from '../kit/game';
 import { loadSession, loadSkill } from '../kit/session';
+import { applyUpdate, findUpdate } from '../kit/update';
 import { t } from './strings';
 
 interface Info {
@@ -11,6 +12,14 @@ interface Info {
 
 export function Home({ onOpen, onStats, onSettings }: { onOpen(game: Game): void; onStats(): void; onSettings(): void }) {
   const [info, setInfo] = useState<Record<string, Info>>({});
+  // Whether a newer version of the app has been found: looked for on arrival, and again on request.
+  const [update, setUpdate] = useState<'unknown' | 'checking' | 'ready' | 'none'>('unknown');
+
+  const check = (asked: boolean) => {
+    if (asked) setUpdate('checking');
+    void findUpdate().then((found) => setUpdate(found ? 'ready' : asked ? 'none' : 'unknown'));
+  };
+  useEffect(() => check(false), []);
 
   useEffect(() => {
     void Promise.all(
@@ -24,6 +33,11 @@ export function Home({ onOpen, onStats, onSettings }: { onOpen(game: Game): void
   return (
     <main class="home">
       <h1>{t.appName}</h1>
+      {update === 'ready' && (
+        <button type="button" class="update" onClick={() => void applyUpdate()}>
+          {t.home.updateReady}
+        </button>
+      )}
       <ul class="game-list">
         {games.map((g) => (
           <li key={g.id}>
@@ -46,7 +60,14 @@ export function Home({ onOpen, onStats, onSettings }: { onOpen(game: Game): void
           {t.home.settings}
         </button>
       </nav>
-      <footer class="version">{t.version(__APP_VERSION__)}</footer>
+      <footer class="version">
+        {t.version(__APP_VERSION__)}
+        {update !== 'ready' && (
+          <button type="button" class="ghost" disabled={update === 'checking'} onClick={() => check(true)}>
+            {update === 'checking' ? t.home.checking : update === 'none' ? t.home.upToDate : t.home.checkUpdate}
+          </button>
+        )}
+      </footer>
     </main>
   );
 }
